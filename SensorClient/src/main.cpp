@@ -18,7 +18,7 @@ const char *ssid = STASSID;
 const char *password = STAPSK;
 
 //// Main server
-const String server = "raspberrypi";
+const String server = SERVER_HOSTNAME;
 const String api_endpoint = "/api/upload_data";
 const uint8_t port = 80;
 

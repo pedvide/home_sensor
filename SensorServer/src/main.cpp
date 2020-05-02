@@ -8,7 +8,7 @@
 #include "config.h"
 
 //// WiFi
-const char* deviceName = "home-sensor";
+const char* deviceName = SERVER_HOSTNAME;
 const char *ssid = STASSID;
 const char *password = STAPSK;
 
