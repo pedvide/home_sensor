@@ -32,7 +32,7 @@ typedef struct{
 } SensorData;
 SensorData sensor_data;
 float temperature, humidity;
-const uint32_t sensor_period_s = 2;
+const uint32_t sensor_period_s = 5;
 CircularBuffer<SensorData, 255> sensor_buffer;  // Keep some raw data
 Adafruit_AM2320 am2320 = Adafruit_AM2320();
 void measure_sensor();
@@ -45,7 +45,7 @@ WiFiClient client;
 HTTPClient http;
 int httpCode;
 String response;
-String postData;
+// String postData;
 // Updates readings every x/2 seconds
 void send_data();
 Ticker post_timer(send_data, int(sensor_period_s/2) * 1e3, 0, MILLIS);
@@ -127,18 +127,19 @@ void send_data() {
   JsonObject data_0 = data.createNestedObject();
   data_0["name"] = "temperature";
   data_0["unit"] = "C";
-  data_0["value"] = sensor_data.temperature;
+  data_0["value"] = isnan(sensor_data.temperature) ? "null" : String(sensor_data.temperature);
 
   JsonObject data_1 = data.createNestedObject();
   data_1["name"] = "humidity";
   data_1["unit"] = "%";
-  data_1["value"] = sensor_data.humidity;
+  data_1["value"] = isnan(sensor_data.humidity) ? "null" : String(sensor_data.humidity);
 
   // Serialize JSON document
+  String postData;
   serializeJson(doc, postData);
 
   http.begin(client, server, port, api_endpoint);
-  http.addHeader("Content-Type", "application/json");    //Specify content-type header
+  http.addHeader("Content-Type", "application/json");
 
   // Serial.println("Sending: '" + postData + "' to " + server + api_endpoint + ".");
   httpCode = http.POST(postData);   //Send the request
