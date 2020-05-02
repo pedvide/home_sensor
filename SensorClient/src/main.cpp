@@ -11,15 +11,14 @@
 #include "config.h"
 
 String mac_sha;
-const char* sensor_id = "living_room";
 
 //// WiFi
 const char *ssid = STASSID;
 const char *password = STAPSK;
 
 //// Main server
-const String server = SERVER_HOSTNAME;
-const String api_endpoint = "/api/upload_data";
+const char* server = SERVER_HOSTNAME;
+const char* api_endpoint = "/api/upload_data";
 const uint8_t port = 80;
 
 //// Time
@@ -120,7 +119,7 @@ void send_data() {
 
   // Prepare JSON document
   StaticJsonDocument<400> doc;
-  doc["sensor_id"] = sensor_id;
+  doc["sensor_id"] = mac_sha;
   doc["time"] = sensor_data.epoch;
 
   JsonArray data = doc.createNestedArray("data");

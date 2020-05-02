@@ -14,8 +14,13 @@ def index():
       }
    return render_template('index.html', **templateData)
 
+@app.route("/api/upload_data")
+def upload_data():
+   
+
 if __name__ == '__main__':
     app.run(debug=True, port=8080, host='0.0.0.0')
 
 # redirect port 8080 to 80 (only available to root) with:
 # sudo iptables -A PREROUTING -t nat -p tcp --dport 80 -j REDIRECT --to-ports 8080
+# sudo iptables-save

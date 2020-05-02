@@ -1,0 +1,20 @@
+html {
+    font-family: Arial;
+    display: inline-block;
+    margin: 0px auto;
+    text-align: center;
+   }
+   h1 { font-size: 3.0rem; }
+   h2 { font-size: 2.0rem; }
+   p { font-size: 3.0rem; }
+   .units { font-size: 1.2rem; }
+   .sensor-labels{
+     font-size: 1.5rem;
+     vertical-align:middle;
+     padding-bottom: 15px;
+   }
+   .sensor-id{
+     font-size: 0.8rem;
+     vertical-align:middle;
+     padding-bottom: 15px;
+}
