@@ -99,7 +99,7 @@ void measure_sensor(){
   if (isnan(temperature)) {
     Serial.println("Error reading temperature.");
   }
-  sensor_buffer.push(SensorData{Amsterdam.now(), temperature, humidity});
+  sensor_buffer.push(SensorData{UTC.now(), temperature, humidity});
   Serial.printf("Sensor values: %.2f C, %.2f %%.\n", temperature, humidity);
 }
 
