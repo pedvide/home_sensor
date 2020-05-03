@@ -99,6 +99,10 @@ void measure_sensor(){
   if (isnan(temperature)) {
     Serial.println("Error reading temperature.");
   }
+  if (isnan(temperature) && isnan(humidity)) {
+    // All datapoints are invalid
+    return;
+  }
   sensor_buffer.push(SensorData{UTC.now(), temperature, humidity});
   Serial.printf("Sensor values: %.2f C, %.2f %%.\n", temperature, humidity);
 }
@@ -145,6 +149,8 @@ void send_data() {
   httpCode = http.POST(postData);   //Send the request
   if (httpCode > 0) {
     response = http.getString();    //Get the response payload
+    response.trim();
+    response.replace("\n", "");
     Serial.printf("HTTP code: %d. Response: %s.\n", httpCode, response.c_str());  //Print HTTP return code and response
     if (httpCode == HTTP_CODE_OK) {
       // Data was sent, remove the data point
@@ -167,6 +173,7 @@ void setup() {
 
   // Sensor
   am2320.begin();
+  delay(500);
 
   // Timer
   measurement_timer.start();
