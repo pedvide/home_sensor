@@ -11,29 +11,23 @@ last_request = None
 timezone = "local"
 
 
-@app.route("/")
-def index():
-    template_data = parse_measurement_request(last_request)
-    return render_template("index.html", **template_data)
+unit_formatters = {
+    "C": lambda value: f"{float(value):.2f}",
+    "%": lambda value: f"{float(value):.1f}",
+}
 
 
-@app.route("/api/upload_data", methods=["POST"])
-def upload_data():
-    global last_request
-    content = request.get_json(silent=True)
-    last_request = content
-    return {"success": True}, 200
-
-
-def parse_measurement_request(request_json):
+def parse_measurement_request(request_json: str) -> dict:
     """Parse request and return dict with measurement data"""
+    date_fmt = "ddd YYYY-MM-DD HH:mm:ss"
     now = arrow.now(timezone)
     sensor_id = request_json.get("sensor_id")
     measurement_datetime = arrow.get(request_json.get("time")).to(timezone)
     measurement = {
         "sensor_id": sensor_id,
-        "measurement_datetime": f"{measurement_datetime.format()} ({measurement_datetime.humanize(now)})",
-        "server_time": now.format(),
+        "measurement_time": f"{measurement_datetime.format(date_fmt)}",
+        "measurement_time_offset": f"{measurement_datetime.humanize(now)}",
+        "server_time": str(now.format(date_fmt)),
     }
 
     request_data = request_json.get("data")
@@ -42,13 +36,25 @@ def parse_measurement_request(request_json):
         value = item.get("value")
         unit = item.get("unit")
         if name and value:
-            if unit in ("C", "%"):
-                fmt_value = f"{float(value):.2f}"
-            else:
-                fmt_value = str(value)
+            formatter = unit_formatters.get(unit, lambda value: str(value))
+            fmt_value = formatter(value)
             measurement[name] = fmt_value
 
     return measurement
+
+
+@app.route("/")
+def index():
+    last_measurement = parse_measurement_request(last_request)
+    return render_template("index.html", **last_measurement)
+
+
+@app.route("/api/upload_data", methods=["POST"])
+def upload_data():
+    global last_request
+    content = request.get_json(silent=True)
+    last_request = content
+    return {"success": True}, 200
 
 
 @app.route("/api/last_measurement")
