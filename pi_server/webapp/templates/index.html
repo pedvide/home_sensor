@@ -8,31 +8,37 @@
 </head>
 <body>
     <h2>Last measurement</h2>
-    <p>
+    <div class="data-row">
         <i class="fas fa-id-card" style="color:#000000;"></i>
+        <span id="station_id" class="station-id">{{ station_id[0:10] }}</span>
         <span id="sensor_id" class="sensor-id">{{ sensor_id[0:10] }}</span>
         <i class="fas fa-clock" style="color:#000000;"></i>
         <span id="measurement_time" class="time">{{ measurement_time_offset }}</span>
-        <i class="fas fa-thermometer-half" style="color:#059e8a;"></i>
-        <span id="temperature">{{ temperature }}</span>
-        <sup class="units">&deg;C</sup>
-        <i class="fas fa-tint" style="color:#00add6;"></i>
-        <span id="humidity">{{ humidity }}</span>
-        <sup class="units">%</sup>
-    </p>
+        <span class="measurement">
+            <i class="fas fa-thermometer-half" style="color:#059e8a;"></i>
+            <span class="magnitude" id="temperature">{{ temperature }}</span>
+            <span class="unit">&deg;C</span>
+        </span>
+        <span class="measurement">
+            <i class="fas fa-tint" style="color:#00add6;"></i>
+            <span class="magnitude" id="humidity">{{ humidity }}</span>
+            <span class="unit">%</span>
+        </span>
+    </div>
 
-    <h4>The date and time on the server is:
-    </h4>
-    <span id="server_time">{{ server_time }}</span>
+    <div class="footer">The date and time on the server is:
+        <span id="server_time">{{ server_time }}</span>
+    </div>
 </body>
 <script>
-    const refresh_rate = 2000;
+    const refresh_rate = 1000;
     setInterval(function () {
         var xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function () {
             if (this.readyState == 4 && this.status == 200) {
                 const data = JSON.parse(this.responseText);
-                document.getElementById("sensor_id").innerHTML = data.sensor_id.substring(0, 10);
+                document.getElementById("station_id").innerHTML = data.station_id.substring(0, 10);
+                document.getElementById("sensor_id").innerHTML = data.sensor_id;
                 document.getElementById("server_time").innerHTML = data.server_time;
                 document.getElementById("measurement_time").innerHTML = data.measurement_time_offset;
                 document.getElementById("temperature").innerHTML = data.temperature;

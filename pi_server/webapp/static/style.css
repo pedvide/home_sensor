@@ -1,25 +1,57 @@
 html {
   font-family: Arial;
-  display: inline-block;
-  margin: 0px auto;
   text-align: center;
 }
-h1 { font-size: 3.0rem; }
-h2 { font-size: 2.0rem; }
-p { font-size: 3.0rem; }
-.units { font-size: 1.2rem; }
-.sensor-labels{
-  font-size: 1.5rem;
-  vertical-align:middle;
-  padding-bottom: 15px;
+h1 {
+  font-size: 3rem;
 }
-.sensor-id{
-  font-size: 1.0rem;
-  vertical-align:middle;
-  padding-bottom: 15px;
+h2 {
+  font-size: 2rem;
 }
-.time{
-  font-size: 1.0rem;
-  vertical-align:middle;
-  padding-bottom: 15px;
+p {
+  font-size: 3rem;
+}
+
+.data-row {
+  margin: auto;
+  font-size: 1.2rem;
+  display: inline-block;
+}
+.fas {
+  margin-left: 10px;
+  vertical-align: middle;
+}
+.measurement {
+  vertical-align: middle;
+}
+.magnitude {
+  font-size: 100%;
+}
+.unit {
+  font-size: 90%;
+  padding-left: 1px;
+}
+
+.station-id {
+  font-size: 1rem;
+  vertical-align: middle;
+  /* padding-bottom: 15px; */
+}
+.sensor-id {
+  font-size: 1rem;
+  vertical-align: middle;
+  /* padding-bottom: 15px; */
+}
+.time {
+  font-size: 1rem;
+  vertical-align: middle;
+  /* padding-bottom: 15px; */
+}
+
+.footer {
+  position: fixed;
+  left: 0;
+  bottom: 10px;
+  width: 100%;
+  text-align: center;
 }
