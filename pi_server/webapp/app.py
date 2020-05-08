@@ -1,15 +1,14 @@
-from flask import Flask
-from flask import render_template
-from flask import request
+from fastapi import FastAPI, HTTPException, Response
+from pydantic import BaseModel
+
 import arrow
 
 from typing import List
 
 # from pprint import pprint
 
-app = Flask(__name__)
+app = FastAPI()
 
-last_request = None
 timezone = "local"
 
 
@@ -47,132 +46,191 @@ def parse_measurement_request(request_json: str) -> dict:
     return measurement
 
 
-@app.route("/")
-def index():
-    last_measurement = parse_measurement_request(last_request)
-    return render_template("index.html", **last_measurement)
+@app.get("/")
+async def index():
+    return "OK"
+    # return render_template("index.html", **last_measurement)
 
 
-@app.route("/api/upload_data", method="POST")
-def upload_data():
-    global last_request
-    content = request.get_json(silent=True)
-    last_request = content
-    return {"success": True}, 200
-
-
-@app.route("/api/last_measurement")
-def last_measurement():
-    if not last_request:
-        return "Not ready", 404
-    return parse_measurement_request(last_request)
-
-
-# New API
-class Measurement:
-    id: int
-
-    station_id: int
-    sensor_name: str
-
-    timestamp: int
-    name: str
-    unit: str
-    value: str
-
-
-class Station:
-    id: int
-    token: str
-    location: str
-    sensor_names: List[str]
-
-
-class Sensor:
-    id: int
+## Sensors
+class SensorIn(BaseModel):
     name: str
 
     measurement_names: List[str]
     measurement_units: List[str]
 
 
-## Measurements
-measurement_query = {
-    "limit": "<limit>",  # 10
-    "offset": "<offset>",  # 0
-    "sort": "<sort>",  # -measurement_date
-    "before_date": "<before_date>",  # now
-    "after_date": "<after_date>",  # 1 day ago
-}
-query_str = "&".join(f"{key}={value}" for key, value in measurement_query.items())
+class Sensor(SensorIn):
+    id: int
 
 
-@app.route("/api/measurements/<id>")
-def measurement(id: int) -> Measurement:
-    """Return the measurement <id>"""
-    pass
+sensor0 = Sensor(id=0, name="am2320", measurement_names=["temp", "hum"], measurement_units=["C", "%"])
+sensor1 = Sensor(id=1, name="accel", measurement_names=["ax", "ay", "az"], measurement_units=["m/s2"] * 3)
+sensors = [sensor0, sensor1]
 
 
-@app.route(f"/api/measurements?{query_str}")
-def all_measurements(limit, offset, sort, before_date, after_date) -> List[Measurement]:
-    """Return all measurements that match the query"""
-    pass
+@app.get("/api/sensors/{id}", response_model=Sensor)
+def sensor(id: int):
+    if id not in range(len(sensor)):
+        raise HTTPException(404, "Not found")
+    return sensors[id]
 
 
-@app.route("/api/measurements", method="POST")
-def create_measurement():
-    """If one measurement return 201 + id.
-    If several return 207 + list of ids."""
-    pass
+@app.get("/api/sensors")
+def all_sensor(id: int) -> List[Sensor]:
+    return sensors
 
 
-## Stations
-@app.route("/api/stations/<id>")
-def station(id: int) -> Station:
-    """Return the station <id>"""
-    pass
-
-
-@app.route("/api/stations")
-def all_stations(id: int) -> List[Station]:
-    """Return all stations"""
-    pass
-
-
-@app.route("/api/stations", method="POST")
-def create_station():
+@app.post("/api/sensors", status_code=201, response_model=Sensor)
+def create_sensor(sensor: SensorIn):
     """Body must contain hash(mac).
     Return 204 + station id in Location header if it didn't exist.
     Return 200 + station id in Location header or body if it already existed."""
-    pass
+    id = len(sensors)
+    new_sensor = Sensor(id=id, **sensor.dict())
+    sensors.append(new_sensor)
+    return new_sensor
 
 
-@app.route("/api/stations/<id>", method="DELETE")
+@app.delete("/api/sensors/{id}", status_code=204)
+def delete_sensor(id: int):
+    """Return 204 (No Content) on success"""
+    if id not in range(len(sensors)):
+        raise HTTPException(404, "Not found")
+    sensors.pop(id)
+
+
+## Stations
+class StationIn(BaseModel):
+    token: str
+    location: str
+    sensor_names: List[str]
+
+
+class Station(StationIn):
+    id: int
+
+
+s0 = Station(id=12, token="asf3r23g2v", location="living room", sensor_names=["am2320"])
+s1 = Station(id=13, token="g34yhnegwf", location="bedroom", sensor_names=["am2320"])
+stations = {12: s0, 13: s1}
+
+
+@app.get("/api/stations/{id}", response_model=Station)
+def station(id: int):
+    """Return the station id"""
+    if id not in stations:
+        raise HTTPException(404, "Not found")
+    return stations[id]
+
+
+@app.get("/api/stations", response_model=List[Station])
+def all_stations(limit: int = 5, offset: int = 0):
+    """Return all stations"""
+    return list(stations.values())[offset : offset + limit]
+
+
+@app.post("/api/stations", status_code=201, response_model=Station)
+def create_station(station: StationIn, sensors: List[SensorIn]):
+    """Body must contain hash(mac).
+    Return 204 + station id in Location header if it didn't exist.
+    Return 200 + station id in Location header or body if it already existed."""
+    id = len(stations.keys())
+    new_station = Station(id=id, **station.dict())
+    stations.append(new_station)
+    return new_station
+
+
+@app.delete("/api/stations/{id}", status_code=204, response_class=Response)
 def delete_station(id: int):
     """Return 204 (No Content) on success"""
-    pass
+    if id not in stations:
+        raise HTTPException(404, "Not found")
+    del stations[id]
 
 
-@app.route("/api/stations/<id>/position", method="PUT")
-def change_station_position(id: int):
+@app.put("/api/stations/{id}/location", status_code=200, response_model=Station)
+def change_station_position(id: int, location: str):
     """200 on success."""
-    pass
+    if id not in stations:
+        raise HTTPException(404, "Not found")
+    stations[id].location = location
+    return stations[id]
 
 
-@app.route(f"/api/stations/<id>/measurements?{query_str}")
-def station_measurements(limit, offset, sort, before_date, after_date):
-    pass
+@app.get("/api/stations/{id}/measurements")
+def station_measurements(id: int, limit: int = 5, offset: int = 0):
+    if id not in stations:
+        raise HTTPException(404, "Not found")
+    return [m for m in measurements if m.station_id == id][offset : offset + limit]
 
 
-## Sensors
-@app.route("/api/sensors/<id>")
-def sensor(id: int) -> Sensor:
-    pass
+## Measurements
+class SingleMeasurement(BaseModel):
+    timestamp: int
+    name: str
+    unit: str
+    value: str
 
 
-@app.route("/api/sensors")
-def all_sensor(id: int) -> List[Sensor]:
-    pass
+class MeasurementIn(BaseModel):
+    station_id: int
+    sensor_name: str
+    data: List[SingleMeasurement]
+
+
+class Measurement(MeasurementIn):
+    id: int
+
+
+m0 = Measurement(
+    id=0,
+    station_id=12,
+    sensor_name="tempsensor",
+    data=[SingleMeasurement(timestamp=12353, name="temp", unit="C", value=23)],
+)
+m1 = Measurement(
+    id=1,
+    station_id=13,
+    sensor_name="tempsensor",
+    data=[SingleMeasurement(timestamp=12600, name="temp", unit="C", value=33)],
+)
+m2 = Measurement(
+    id=2,
+    station_id=13,
+    sensor_name="am2320",
+    data=[
+        SingleMeasurement(timestamp=12600, name="temp", unit="C", value=33),
+        SingleMeasurement(timestamp=12600, name="hum", unit="%", value=40),
+    ],
+)
+measurements = [m0, m1, m2]
+
+
+@app.get("/api/measurements/{id}", response_model=Measurement)
+def measurement(id: int):
+    """Return the measurement <id>"""
+    if id not in range(len(measurements)):
+        raise HTTPException(404, "Not found")
+    return measurements[id]
+
+
+@app.get(f"/api/measurements", response_model=List[Measurement])
+def all_measurements(
+    limit: int = 5, offset: int = 0, sort: str = None, before_date: str = None, after_date: str = None
+):
+    """Return all measurements that match the query"""
+    return measurements[offset : offset + limit]
+
+
+@app.post("/api/measurements", status_code=201, response_model=Measurement)
+def create_measurement(measurement: MeasurementIn):
+    """If one measurement return 201 + id.
+    If several return 207 + list of ids."""
+    id = len(measurements)
+    new_meas = Measurement(id=id, **measurement.dict())
+    measurements.append(new_meas)
+    return new_meas
 
 
 if __name__ == "__main__":
