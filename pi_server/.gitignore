@@ -3,6 +3,4 @@ __pycache__
 *.pyc
 .vscode
 workspace.code-workspace
-config.h
-
-.pio
+*.egg-info
