@@ -1,22 +1,14 @@
 from fastapi import FastAPI
 
 import arrow
-from .database import init_db, clear_db
+
+from . import rest_api
 
 # from pprint import pprint
 
 app = FastAPI()
 
 timezone = "local"
-
-
-# Dependency
-def get_db():
-    try:
-        db = init_db()
-        yield db
-    finally:
-        clear_db(db)
 
 
 unit_formatters = {
@@ -59,8 +51,7 @@ async def index():
     # return render_template("index.html", **last_measurement)
 
 
-if __name__ == "__main__":
-    app.run(debug=True, port=8080, host="0.0.0.0")
+app.include_router(rest_api.router, prefix="/api")
 
 # redirect port 8080 to 80 (only available to root) with:
 # sudo iptables -A PREROUTING -t nat -p tcp --dport 80 -j REDIRECT --to-ports 8080
