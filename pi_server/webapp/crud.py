@@ -8,7 +8,8 @@ def get_station(db: Session, station_id: int) -> Optional[models.Station]:
 
 
 def get_station_by_token(db: Session, token: str) -> Optional[models.Station]:
-    return [station for station in db["stations"] if station.token == token][0]
+    stations = [station for station in db["stations"] if station.token == token]
+    return stations[0] if stations else None
 
 
 def get_all_stations(db: Session, offset: int = 0, limit: int = 100) -> List[models.Station]:
