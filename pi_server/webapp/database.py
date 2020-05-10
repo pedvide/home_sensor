@@ -2,11 +2,16 @@ from typing import Dict
 
 Session = dict
 
-db = dict()
+
+def get_db():
+    try:
+        db = init_db()
+        yield db
+    finally:
+        clear_db(db)
 
 
 def init_db():
-    global db
     stations: Dict[str, "Station"] = dict()
     measurements: Dict[str, "Measurement"] = dict()
     sensors: Dict[str, "Sensor"] = dict()
@@ -14,8 +19,7 @@ def init_db():
     return db
 
 
-def clear_db():
-    global db
+def clear_db(db):
     db["stations"] = dict()
     db["measurements"] = dict()
     db["sensors"] = dict()
