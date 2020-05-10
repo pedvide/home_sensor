@@ -1,21 +1,20 @@
-from fastapi import HTTPException, Response, Depends
+from fastapi import HTTPException, Response, Depends, APIRouter
 
 from . import crud, schemas
-from .database import Session
+from .database import Session, get_db
 
 from typing import List
 
-from .app import app, get_db
-
+router = APIRouter()
 
 ## Stations
-@app.get("/api/stations", response_model=List[schemas.Station])
+@router.get("/stations", response_model=List[schemas.Station])
 def all_stations(limit: int = 5, offset: int = 0, db: Session = Depends(get_db)):
     """Return all stations"""
     return crud.get_all_stations(db, offset, limit)
 
 
-@app.post("/api/stations", status_code=201, response_model=schemas.Station)
+@router.post("/stations", status_code=201, response_model=schemas.Station)
 def create_station(station: schemas.StationCreate, db: Session = Depends(get_db)):
     """Body must contain hash(mac).
     Return 201 + station if it didn't exist.
@@ -23,10 +22,10 @@ def create_station(station: schemas.StationCreate, db: Session = Depends(get_db)
     db_station = crud.get_station_by_token(db, token=station.token)
     if db_station:
         return Response(db_station, status_code=200)
-    return crud.create_station_(db, station)
+    return crud.create_station(db, station)
 
 
-@app.get("/api/stations/{station_id}", response_model=schemas.Station)
+@router.get("/stations/{station_id}", response_model=schemas.Station)
 def station(station_id: int, db: Session = Depends(get_db)):
     """Return the station id"""
     db_station = crud.get_station(db, station_id)
@@ -35,7 +34,7 @@ def station(station_id: int, db: Session = Depends(get_db)):
     return db_station
 
 
-@app.delete("/api/stations/{station_id}", status_code=204, response_class=Response)
+@router.delete("/stations/{station_id}", status_code=204, response_class=Response)
 def delete_station(station_id: int, db: Session = Depends(get_db)):
     """Return 204 (No Content) on success"""
     if not crud.get_station(db, station_id):
@@ -46,15 +45,15 @@ def delete_station(station_id: int, db: Session = Depends(get_db)):
 ## TODO: Add PUT api/stations/ to update localtion and sensors
 
 
-@app.get("/api/stations/{station_id}/measurements", response_model=schemas.Measurement)
+@router.get("/stations/{station_id}/measurements", response_model=schemas.Measurement)
 def station_measurements(station_id: int, limit: int = 5, offset: int = 0, db: Session = Depends(get_db)):
     if not crud.get_station(db, station_id):
         raise HTTPException(404, "Station not found")
     return crud.get_station_measurements(db, station_id)
 
 
-@app.post(
-    "/api/stations/{station_id}/sensors/{sensor_id}/measurements",
+@router.post(
+    "/stations/{station_id}/sensors/{sensor_id}/measurements",
     status_code=201,
     response_model=schemas.Measurement,
 )
@@ -73,7 +72,7 @@ def create_measurement(
 
 
 ## Measurements
-@app.get(f"/api/measurements", response_model=List[schemas.Measurement])
+@router.get(f"/measurements", response_model=List[schemas.Measurement])
 def all_measurements(limit: int = 5, offset: int = 0, db: Session = Depends(get_db)):
     """Return all measurements that match the query"""
     return crud.get_all_measurements(db, offset, limit)
