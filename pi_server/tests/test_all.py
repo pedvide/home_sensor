@@ -1,9 +1,14 @@
 from fastapi.testclient import TestClient
+from contextlib import contextmanager
 
-from webapp import app, get_db
+from webapp.app import app
+from webapp.database import get_db
 
 ## Testing
 client = TestClient(app)
+
+
+get_db = contextmanager(get_db)
 
 
 def test_index():
@@ -18,7 +23,7 @@ def test_add_station():
 
     station_out = dict(id=0, token="asf3r23g2v", location="living room", sensor_ids=[0])
 
-    with get_db:
+    with get_db():
         response = client.post("/api/stations", json=station)
     assert response.status_code == 201
     assert response.json() == station_out
@@ -31,7 +36,7 @@ def test_add_station_two_sensors():
 
     station_out = dict(id=0, token="sfsdgsds", location="bedroom", sensor_ids=[0, 1])
 
-    with get_db:
+    with get_db():
         response = client.post("/api/stations", json=station)
     assert response.status_code == 201
     assert response.json() == station_out
@@ -49,7 +54,7 @@ def test_get_stations():
     # station0_out = dict(id=0, token="asf3r23g2v", location="living room", sensor_ids=[0])
     # station1_out = dict(id=1, token="sfsdgsds", location="bedroom", sensor_ids=[1, 2])
 
-    with get_db as db:
+    with get_db() as db:
         print(db["stations"])
         response = client.get("/api/stations")
     assert response.status_code == 200
