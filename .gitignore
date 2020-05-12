@@ -6,3 +6,5 @@ workspace.code-workspace
 config.h
 
 .pio
+.coverage
+htmlcov
