@@ -3,15 +3,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-    <link rel="stylesheet" , href="static/style.css">
+    <link rel="stylesheet" , href="{{ url_for('static', path='/style.css') }}">
     <title>Home Sensor</title>
 </head>
 <body>
     <h2>Last measurement</h2>
     <div class="data-row">
         <i class="fas fa-id-card" style="color:#000000;"></i>
-        <span id="station_id" class="station-id">{{ station_id[0:10] }}</span>
-        <span id="sensor_id" class="sensor-id">{{ sensor_id[0:10] }}</span>
+        <span id="station_id" class="station-id">{{ station_id }}</span>
+        <span id="sensor_id" class="sensor-id">{{ sensor_id }}</span>
         <i class="fas fa-clock" style="color:#000000;"></i>
         <span id="measurement_time" class="time">{{ measurement_time_offset }}</span>
         <span class="measurement">
@@ -37,7 +37,7 @@
         xhttp.onreadystatechange = function () {
             if (this.readyState == 4 && this.status == 200) {
                 const data = JSON.parse(this.responseText);
-                document.getElementById("station_id").innerHTML = data.station_id.substring(0, 10);
+                document.getElementById("station_id").innerHTML = data.station_id;
                 document.getElementById("sensor_id").innerHTML = data.sensor_id;
                 document.getElementById("server_time").innerHTML = data.server_time;
                 document.getElementById("measurement_time").innerHTML = data.measurement_time_offset;
@@ -45,7 +45,7 @@
                 document.getElementById("humidity").innerHTML = data.humidity;
             }
         };
-        xhttp.open("GET", "/api/last_measurement", async = true);
+        xhttp.open("GET", "/api/measurements", async = true);
         xhttp.send();
     }, refresh_rate);
 </script></html>

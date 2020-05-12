@@ -1,5 +1,7 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 import arrow
 
 from . import rest_api
@@ -7,6 +9,9 @@ from . import rest_api
 # from pprint import pprint
 
 app = FastAPI()
+app.include_router(rest_api.router, prefix="/api")
+app.mount("/static", StaticFiles(directory="webapp/static"), name="static")
+templates = Jinja2Templates(directory="webapp/templates")
 
 timezone = "local"
 
@@ -45,13 +50,19 @@ def parse_measurement_request(request_json: str) -> dict:
     return measurement
 
 
+last_measurement = {
+    "station_id": 0,
+    "sensor_id": 0,
+    "time": 1589231767,
+    "data": [{"name": "temp", "unit": "C", "value": "23.5"}, {"name": "hum", "unit": "%", "value": "40"}],
+}
+
+
 @app.get("/")
-async def index():
-    return "OK"
-    # return render_template("index.html", **last_measurement)
+async def index(request: Request):
+    parsed_last_measurement = parse_measurement_request(last_measurement)
+    return templates.TemplateResponse("index.html", {"request": request, **parsed_last_measurement})
 
-
-app.include_router(rest_api.router, prefix="/api")
 
 # redirect port 8080 to 80 (only available to root) with:
 # sudo iptables -A PREROUTING -t nat -p tcp --dport 80 -j REDIRECT --to-ports 8080
