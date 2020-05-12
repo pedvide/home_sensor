@@ -20,7 +20,9 @@ def get_all_stations(db: Session, offset: int = 0, limit: int = 10) -> List[mode
 
 def create_station(db: Session, station: schemas.StationCreate) -> models.Station:
     station_id = len(db["stations"].keys())
-    new_station = models.Station(id=station_id, sensors=[], location=station.location, token=station.token)
+    new_station = models.Station(
+        id=station_id, sensors=[], location=station.location, token=station.token
+    )
     new_sensors = []
     for sensor in station.sensors:
         sensor_id = len(db["sensors"])
@@ -39,14 +41,17 @@ def delete_station(db: Session, station_id: int) -> None:
 def get_station_measurements(
     db: Session, station_id: int, offset: int = 0, limit: int = 10
 ) -> List[models.Measurement]:
-    return [m for m in db["measurements"] if m.station_id == station_id][offset : offset + limit]
+    station = get_station(db, station_id)
+    return [m for m_id, m in db["measurements"].items() if m.station == station][
+        offset : offset + limit
+    ]
 
 
 def get_sensor(db: Session, sensor_id: int) -> Optional[models.Sensor]:
-    return db["sensor"].get(sensor_id)
+    return db["sensors"].get(sensor_id)
 
 
-def get_all_measurements(db: Session, offset: int = 0, limit: int = 10):
+def get_all_measurements(db: Session, offset: int = 0, limit: int = 10) -> List[models.Measurement]:
     return list(db["measurements"].values())[offset : offset + limit]
 
 
@@ -54,8 +59,8 @@ def create_measurement(
     db: Session, station_id: int, sensor_id: int, measurement: schemas.MeasurementCreate
 ) -> models.Measurement:
     meas_id = len(db["measurements"])
-    new_meas = models.Measurement(
-        id=meas_id, station_id=station_id, sensor_id=sensor_id, **measurement.dict()
-    )
+    station = get_station(db, station_id)
+    sensor = get_sensor(db, sensor_id)
+    new_meas = models.Measurement(id=meas_id, station=station, sensor=sensor, **measurement.dict())
     db["measurements"][meas_id] = new_meas
     return new_meas
