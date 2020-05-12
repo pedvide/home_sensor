@@ -52,7 +52,7 @@ def all_stations(station_zero, station_one):
 def test_index():
     response = client.get("/")
     assert response.status_code == 200
-    assert response.json() == "OK"
+    assert response.headers["Content-Type"] == "text/html; charset=utf-8"
 
 
 def test_one_station(station_zero):
@@ -73,7 +73,7 @@ def test_one_station(station_zero):
         assert response.json() == [station_out]
 
 
-def test_wrong_station():
+def test_get_wrong_station():
 
     with fresh_db():
         response = client.get("/api/stations/0")
