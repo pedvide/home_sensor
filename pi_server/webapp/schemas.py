@@ -39,33 +39,21 @@ class Station(StationBase):
         orm_mode = True
 
 
-class SingleMeasurementBase(BaseModel):
+class MeasurementBase(BaseModel):
+    timestamp: int
     name: str
     unit: str
     value: str
 
 
-class SingleMeasurementCreate(SingleMeasurementBase):
+class MeasurementCreate(MeasurementBase):
     pass
 
 
-class SingleMeasurement(SingleMeasurementBase):
+class Measurement(MeasurementBase):
     id: int
-    station_id: int
-    sensor_id: int
-    timestamp: int
+    station: Station
+    sensor: Sensor
 
     class Config:
         orm_mode = True
-
-
-class MeasurementBase(BaseModel):
-    timestamp: int
-
-
-class MeasurementCreate(MeasurementBase):
-    data: List[SingleMeasurementCreate]
-
-
-class Measurement(MeasurementBase):
-    data: List[SingleMeasurement]

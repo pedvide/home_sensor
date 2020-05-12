@@ -20,17 +20,11 @@ class Station:
 
 
 @dataclass
-class SingleMeasurement:
+class Measurement:
+    id: int
+    station: Station
+    sensor: Sensor
+    timestamp: int
     name: str
     unit: str
     value: str
-    id: int
-    station_id: int
-    sensor_id: int
-    timestamp: int
-
-
-@dataclass
-class Measurement:
-    timestamp: int
-    data: List[SingleMeasurement]

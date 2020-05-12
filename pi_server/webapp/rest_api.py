@@ -46,7 +46,7 @@ def station(station_id: int, db: Session = Depends(get_db)):
 ## TODO: Add DELET/PUT stations/ to delete/update localtion and sensors
 
 
-@router.get("/stations/{station_id}/measurements", response_model=schemas.Measurement)
+@router.get("/stations/{station_id}/measurements", response_model=List[schemas.Measurement])
 def station_measurements(
     station_id: int, query_params: ListQueryParameters = Depends(), db: Session = Depends(get_db)
 ):
@@ -58,20 +58,25 @@ def station_measurements(
 @router.post(
     "/stations/{station_id}/sensors/{sensor_id}/measurements",
     status_code=201,
-    response_model=schemas.Measurement,
+    response_model=List[schemas.Measurement],
 )
 def create_measurement(
-    station_id: int, sensor_id: int, measurement: schemas.MeasurementCreate, db: Session = Depends(get_db)
+    station_id: int,
+    sensor_id: int,
+    measurements: List[schemas.MeasurementCreate],
+    db: Session = Depends(get_db),
 ):
-    """If one measurement return 201 + id.
-    If several return 207 + list of ids."""
+    """Return 201 + id."""
     if not crud.get_station(db, station_id):
         raise HTTPException(404, "Station not found")
     if not crud.get_sensor(db, sensor_id):
         raise HTTPException(404, "Sensor not found")
 
-    db_meas = crud.create_measurement(db, station_id, sensor_id, measurement)
-    return db_meas
+    db_measurements = [
+        crud.create_measurement(db, station_id, sensor_id, measurement) for measurement in measurements
+    ]
+
+    return db_measurements
 
 
 ## Measurements
