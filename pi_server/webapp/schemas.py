@@ -33,7 +33,7 @@ class StationCreate(StationBase):
 
 class Station(StationBase):
     id: int
-    sensor_ids: List[int]
+    sensors: List[Sensor] = []
 
     class Config:
         orm_mode = True
@@ -68,4 +68,4 @@ class MeasurementCreate(MeasurementBase):
 
 
 class Measurement(MeasurementBase):
-    data_ids: List[int]
+    data: List[SingleMeasurement]
