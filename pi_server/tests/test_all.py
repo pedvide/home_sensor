@@ -177,29 +177,3 @@ def test_get_station_measurement(station_zero, measurement_one):
         response = client.get("/api/stations/0/measurements")
     assert response.status_code == 200
     assert response.json() == [m0_out]
-
-
-"""
-m0 = Measurement(
-    id=0,
-    station_id=13,
-    sensor_id=1,
-    data=[SingleMeasurement(id=0, timestamp=12353, name="temp", unit="C", value=23)],
-)
-m1 = Measurement(
-    id=1,
-    station_id=13,
-    sensor_id=1,
-    data=[SingleMeasurement(id=1, timestamp=12600, name="temp", unit="C", value=33)],
-)
-m2 = Measurement(
-    id=2,
-    station_id=12,
-    sensor_id=0,
-    data=[
-        SingleMeasurement(id=2, timestamp=12600, name="temp", unit="C", value=33),
-        SingleMeasurement(id=3, timestamp=12600, name="hum", unit="%", value=40),
-    ],
-)
-measurements = {0: m0, 1: m1, 2: m2}
-"""
