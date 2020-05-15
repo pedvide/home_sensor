@@ -2,21 +2,33 @@ from pydantic import BaseModel
 from typing import List
 
 
-## Schemas
+class MagnitudeBase(BaseModel):
+    name: str
+    unit: str
+
+
+class MagnitudeCreate(MagnitudeBase):
+    pass
+
+
+class Magnitude(MagnitudeBase):
+    id: int
+
+    class Config:
+        orm_mode = True
+
+
 class SensorBase(BaseModel):
     name: str
 
-    magnitude_names: List[str]
-    magnitude_units: List[str]
-
 
 class SensorCreate(SensorBase):
-    pass
+    magnitudes: List[MagnitudeCreate]
 
 
 class Sensor(SensorBase):
     id: int
-    station_id: int
+    magnitudes: List[Magnitude]
 
     class Config:
         orm_mode = True
@@ -41,19 +53,18 @@ class Station(StationBase):
 
 class MeasurementBase(BaseModel):
     timestamp: int
-    name: str
-    unit: str
     value: str
 
 
 class MeasurementCreate(MeasurementBase):
-    pass
+    magnitude_id: int
 
 
 class Measurement(MeasurementBase):
     id: int
     station: Station
     sensor: Sensor
+    magnitude: Magnitude
 
     class Config:
         orm_mode = True
