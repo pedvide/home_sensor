@@ -22,7 +22,7 @@ unit_formatters = {
 }
 
 
-def parse_measurement_request(request_json: str) -> dict:
+def parse_measurement_request(request_json: dict) -> dict:
     """Parse request and return dict with measurement data"""
     date_fmt = "ddd YYYY-MM-DD HH:mm:ss"
     now = arrow.now(timezone)
@@ -37,7 +37,7 @@ def parse_measurement_request(request_json: str) -> dict:
         "server_time": str(now.format(date_fmt)),
     }
 
-    request_data = request_json.get("data")
+    request_data = request_json.get("data", [])
     for item in request_data:
         name = item.get("name")
         value = item.get("value")
@@ -54,7 +54,10 @@ last_measurement = {
     "station_id": 0,
     "sensor_id": 0,
     "time": 1589231767,
-    "data": [{"name": "temp", "unit": "C", "value": "23.5"}, {"name": "hum", "unit": "%", "value": "40"}],
+    "data": [
+        {"name": "temp", "unit": "C", "value": "23.5"},
+        {"name": "hum", "unit": "%", "value": "40"},
+    ],
 }
 
 

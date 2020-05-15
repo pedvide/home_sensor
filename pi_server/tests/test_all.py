@@ -20,29 +20,28 @@ def fresh_db():
 
 @pytest.fixture
 def station_zero():
-    sensor0 = dict(name="am2320", magnitude_names=["temp", "hum"], magnitude_units=["C", "%"])
+    mag0 = dict(name="temp", unit="C")
+    mag1 = dict(name="hum", unit="%")
+    sensor0 = dict(name="am2320", magnitudes=[mag0, mag1])
     station0 = dict(token="asf3r23g2v", location="living room", sensors=[sensor0])
 
-    station0_out = dict(
-        id=0,
-        token="asf3r23g2v",
-        location="living room",
-        sensors=[dict(id=0, station_id=0, **sensor0)],
-    )
+    sensor0_out = dict(id=0, name="am2320", magnitudes=[dict(id=0, **mag0), dict(id=1, **mag1)])
+    station0_out = dict(id=0, token="asf3r23g2v", location="living room", sensors=[sensor0_out],)
     return station0, station0_out
 
 
 @pytest.fixture
 def station_one():
-    sensor0 = dict(name="am2320", magnitude_names=["temp", "hum"], magnitude_units=["C", "%"])
-    sensor1 = dict(name="temponly", magnitude_names=["temp"], magnitude_units=["C"])
+    mag0 = dict(name="temp", unit="C")
+    mag1 = dict(name="hum", unit="%")
+    sensor0 = dict(name="am2320", magnitudes=[mag0, mag1])
+    sensor1 = dict(name="temponly", magnitudes=[mag0])
     station1 = dict(token="sfsdgsds", location="bedroom", sensors=[sensor0, sensor1])
 
+    sensor0_out = dict(id=0, name="am2320", magnitudes=[dict(id=0, **mag0), dict(id=1, **mag1)])
+    sensor1_out = dict(id=1, name="temponly", magnitudes=[dict(id=0, **mag0)])
     station1_out = dict(
-        id=1,
-        token="sfsdgsds",
-        location="bedroom",
-        sensors=[dict(id=1, station_id=1, **sensor0), dict(id=2, station_id=1, **sensor1)],
+        id=1, token="sfsdgsds", location="bedroom", sensors=[sensor0_out, sensor1_out],
     )
     return station1, station1_out
 
@@ -52,9 +51,17 @@ def measurement_one(station_zero):
 
     station_in, station_out = station_zero
     sensor_out = station_out["sensors"][0]
+    magnitude_out = sensor_out["magnitudes"][0]
 
-    m0_in = dict(timestamp=1589231767, name="temp", value="25.3", unit="C")
-    m0_out = dict(id=0, station=station_out, sensor=sensor_out, **m0_in)
+    m0_in = dict(timestamp=1589231767, magnitude_id=0, value="25.3")
+    m0_out = dict(
+        id=0,
+        station=station_out,
+        sensor=sensor_out,
+        magnitude=magnitude_out,
+        timestamp=1589231767,
+        value="25.3",
+    )
 
     return m0_in, m0_out
 
