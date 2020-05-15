@@ -4,3 +4,4 @@ __pycache__
 .vscode
 workspace.code-workspace
 *.egg-info
+.mypy_cache
