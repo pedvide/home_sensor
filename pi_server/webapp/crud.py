@@ -7,8 +7,7 @@ from typing import List, Optional
 
 # Translate from models to schemas
 def db_magnitude_to_schema(db: Session, db_magnitude: models.Magnitude) -> schemas.Magnitude:
-    magnitude_out = {"id": db_magnitude.id, "name": db_magnitude.name, "unit": db_magnitude.unit}
-    return schemas.Magnitude(**magnitude_out)
+    return schemas.Magnitude.from_orm(db_magnitude)
 
 
 def db_sensor_to_schema(db: Session, db_sensor: models.Sensor) -> schemas.Sensor:
