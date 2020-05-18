@@ -7,7 +7,7 @@ from typing import List, Optional
 
 # Magnitudes
 def get_magnitude(db: Session, magnitude_id: int) -> Optional[models.Magnitude]:
-    return db.query(models.Magnitude).filter(models.Magnitude.id == magnitude_id).one_or_none()
+    return db.query(models.Magnitude).get(magnitude_id)
 
 
 def get_magnitude_by_name(db: Session, name: str) -> Optional[models.Magnitude]:
@@ -24,7 +24,7 @@ def create_magnitude(db: Session, magnitude: schemas.MagnitudeCreate) -> models.
 
 # Sensors
 def get_sensor(db: Session, sensor_id: int) -> Optional[models.Sensor]:
-    return db.query(models.Sensor).filter(models.Sensor.id == sensor_id).one_or_none()
+    return db.query(models.Sensor).get(sensor_id)
 
 
 def get_sensor_by_name(db: Session, name: str) -> Optional[models.Sensor]:
@@ -50,7 +50,7 @@ def create_sensor(db: Session, sensor: schemas.SensorCreate) -> models.Sensor:
 
 # Stations
 def get_station(db: Session, station_id: int) -> Optional[models.Station]:
-    return db.query(models.Station).filter(models.Station.id == station_id).one_or_none()
+    return db.query(models.Station).get(station_id)
 
 
 def get_station_by_token(db: Session, token: str) -> Optional[models.Station]:
@@ -89,7 +89,7 @@ def get_station_measurements(
 ) -> List[models.Measurement]:
     return (
         db.query(models.Station)
-        .filter(models.Station.id == 1)
+        .filter(models.Station.id == station_id)
         .one()
         .measurements[offset : offset + limit]
     )
