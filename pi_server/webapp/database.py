@@ -1,34 +1,25 @@
-from typing import Dict
-
-Session = dict
-
-
-def init_db():
-    stations: Dict[str, "Station"] = dict()
-    measurements: Dict[str, "Measurement"] = dict()
-    sensors: Dict[str, "Sensor"] = dict()
-    magnitudes: Dict[str, "Magnitude"] = dict()
-    db = {
-        "stations": stations,
-        "measurements": measurements,
-        "sensors": sensors,
-        "magnitudes": magnitudes,
-    }
-    return db
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session  # noqa: F401
+from pathlib import Path
 
 
-def clear_db():
-    db["stations"] = dict()
-    db["measurements"] = dict()
-    db["sensors"] = dict()
-    db["magnitudes"] = dict()
+database_file = "sql_app.db"
+database_path = Path(".") / database_file
+SQLALCHEMY_DATABASE_URL = f"sqlite:///./{database_file}"
+# SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 
-
-db = init_db()
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}, echo=False
+)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
 
 
 def get_db():
     try:
+        db = SessionLocal()
         yield db
     finally:
-        pass
+        db.close()
