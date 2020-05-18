@@ -5,6 +5,10 @@ from fastapi.templating import Jinja2Templates
 import arrow
 
 from . import rest_api
+from .database import engine
+from . import models
+
+models.Base.metadata.create_all(bind=engine)
 
 # from pprint import pprint
 
