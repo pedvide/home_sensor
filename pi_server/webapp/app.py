@@ -74,4 +74,5 @@ async def index(request: Request):
 # redirect port 8080 to 80 (only available to root) with:
 # sudo iptables -A PREROUTING -t nat -p tcp --dport 80 -j REDIRECT --to-ports 8080
 # sudo iptables-save
-# run with uvicorn webapp.app:app --reload
+# run locally uvicorn webapp.app:app --reload
+# run in the pi with uvicorn webapp.app:app --reload --port 8080 --host 0.0.0.0
