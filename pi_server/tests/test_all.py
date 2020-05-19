@@ -95,7 +95,12 @@ def measurement_one(station_zero):
     sensor_out = station_out["sensors"][0]
     magnitude_out = sensor_out["magnitudes"][0]
 
-    m0_in = dict(timestamp=1589231767, magnitude_id=1, value="25.3")
+    m0_in = dict(
+        timestamp=1589231767,
+        magnitude_id=magnitude_out["id"],
+        sensor_id=sensor_out["id"],
+        value="25.3",
+    )
     m0_out = dict(
         id=1,
         station=station_out,
@@ -238,7 +243,7 @@ def test_post_measurement(client, db_session, station_zero, measurement_one):
 
     client.post("/api/stations", json=station_in)
 
-    response = client.post("/api/stations/1/sensors/1/measurements", json=[m0_in])
+    response = client.post("/api/stations/1/measurements", json=[m0_in])
     assert response.status_code == 201
     assert response.json() == [m0_out]
 
@@ -249,7 +254,7 @@ def test_get_measurement(client, db_session, station_zero, measurement_one):
     m0_in, m0_out = measurement_one
 
     client.post("/api/stations", json=station_in)
-    client.post("/api/stations/1/sensors/1/measurements", json=[m0_in])
+    client.post("/api/stations/1/measurements", json=[m0_in])
     response = client.get("/api/measurements")
     assert response.status_code == 200
     assert response.json() == [m0_out]
@@ -261,7 +266,7 @@ def test_get_station_measurement(client, db_session, station_zero, measurement_o
     m0_in, m0_out = measurement_one
 
     client.post("/api/stations", json=station_in)
-    client.post("/api/stations/1/sensors/1/measurements", json=[m0_in])
+    client.post("/api/stations/1/measurements", json=[m0_in])
     response = client.get("/api/stations/1/measurements")
     assert response.status_code == 200
     assert response.json() == [m0_out]

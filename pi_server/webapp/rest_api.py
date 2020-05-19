@@ -77,34 +77,30 @@ def station_measurements(
 
 
 @router.post(
-    "/stations/{station_id}/sensors/{sensor_id}/measurements",
+    "/stations/{station_id}/measurements",
     status_code=201,
     response_model=List[schemas.Measurement],
 )
 def create_measurement(
-    station_id: int,
-    sensor_id: int,
-    measurements: List[schemas.MeasurementCreate],
-    db: Session = Depends(get_db),
+    station_id: int, measurements: List[schemas.MeasurementCreate], db: Session = Depends(get_db),
 ):
     """Return 201 + id."""
     if not crud.get_station(db, station_id):
         raise HTTPException(404, "Station not found")
-    if not crud.get_sensor(db, sensor_id):
-        raise HTTPException(404, "Sensor not found")
     for num, measurement in enumerate(measurements):
+        if not crud.get_sensor(db, measurement.sensor_id):
+            raise HTTPException(404, "Sensor not found")
         if not crud.get_magnitude(db, measurement.magnitude_id):
             raise HTTPException(404, f"Magnitude not found in measurement {num}.")
 
     db_measurements = [
-        crud.create_measurement(db, station_id, sensor_id, measurement)
-        for measurement in measurements
+        crud.create_measurement(db, station_id, measurement) for measurement in measurements
     ]
     return db_measurements
 
 
 ## Measurements
-@router.get(f"/measurements", response_model=List[schemas.Measurement])
+@router.get("/measurements", response_model=List[schemas.Measurement])
 def all_measurements(query_params: ListQueryParameters = Depends(), db: Session = Depends(get_db)):
     """Return all measurements that match the query"""
     db_measurements = crud.get_all_measurements(db, **dataclasses.asdict(query_params))

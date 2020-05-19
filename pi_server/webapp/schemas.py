@@ -58,6 +58,7 @@ class MeasurementBase(BaseModel):
 
 class MeasurementCreate(MeasurementBase):
     magnitude_id: int
+    sensor_id: int
 
 
 class Measurement(MeasurementBase):

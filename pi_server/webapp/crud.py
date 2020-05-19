@@ -117,11 +117,9 @@ def get_all_measurements(db: Session, offset: int = 0, limit: int = 10) -> List[
 
 
 def create_measurement(
-    db: Session, station_id: int, sensor_id: int, measurement: schemas.MeasurementCreate
+    db: Session, station_id: int, measurement: schemas.MeasurementCreate
 ) -> models.Measurement:
-    db_measurement = models.Measurement(
-        station_id=station_id, sensor_id=sensor_id, **measurement.dict()
-    )
+    db_measurement = models.Measurement(station_id=station_id, **measurement.dict())
 
     db.add(db_measurement)
     db.commit()
