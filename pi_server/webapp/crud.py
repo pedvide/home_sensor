@@ -78,8 +78,24 @@ def create_station(db: Session, station: schemas.StationCreate) -> models.Statio
     return db_station
 
 
+def change_station(
+    db: Session, old_station: models.Station, new_station: schemas.StationCreate
+) -> None:
+    old_station.location = new_station.location
+
+    db_sensors = []
+    for sensor_in in new_station.sensors:
+        sensor = get_sensor_by_name(db, sensor_in.name)
+        if not sensor:
+            sensor = create_sensor(db, sensor_in)
+        db_sensors.append(sensor)
+    old_station.sensors = db_sensors
+
+    db.commit()
+
+
 def delete_station(db: Session, station_id: int) -> None:
-    db_station = db.query(models.Station).filter(models.Station.id == station_id).one()
+    db_station = db.query(models.Station).get(station_id)
     db.delete(db_station)
     db.commit()
 

@@ -193,6 +193,44 @@ def test_post_same_station_twice(client, db_session, station_zero):
     assert response.json() == [station0_out]
 
 
+def test_modify_station(client, db_session, station_zero, station_one):
+    """Create a station0, then modify it using station1's sensors"""
+    station0_in, station0_out = station_zero
+
+    station1_in, station1_out = station_one
+    sensors1_in = station1_in["sensors"]
+    sensors1_out = station1_out["sensors"]
+
+    modified_station_in = dict()
+    modified_station_in["token"] = station0_in["token"]
+    modified_station_in["location"] = "kitchen"
+    modified_station_in["sensors"] = sensors1_in
+    modified_station_out = dict()
+    modified_station_out["id"] = station0_out["id"]
+    modified_station_out["token"] = station0_out["token"]
+    modified_station_out["location"] = "kitchen"
+    modified_station_out["sensors"] = sensors1_out
+
+    # create station first
+    response = client.post("/api/stations", json=station0_in)
+    assert response.status_code == 201
+    assert "location" in response.headers
+    assert response.headers["location"] == "1"
+    assert response.json() == station0_out
+
+    response = client.get("/api/stations")
+    assert response.status_code == 200
+    assert response.json() == [station0_out]
+
+    # PUT with new location and sensors
+    response = client.put("/api/stations/1", json=modified_station_in)
+    assert response.status_code == 204
+
+    response = client.get("/api/stations/1")
+    assert response.status_code == 200
+    assert response.json() == modified_station_out
+
+
 def test_post_measurement(client, db_session, station_zero, measurement_one):
 
     station_in, _ = station_zero
