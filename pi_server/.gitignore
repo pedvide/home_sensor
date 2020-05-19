@@ -5,3 +5,4 @@ __pycache__
 workspace.code-workspace
 *.egg-info
 .mypy_cache
+pip-wheel-metadata
