@@ -99,6 +99,14 @@ def create_measurement(
     return db_measurements
 
 
+## Sensors
+@router.get("/sensors", response_model=List[schemas.Sensor])
+def all_sensors(query_params: ListQueryParameters = Depends(), db: Session = Depends(get_db)):
+    """Return all sensors that match the query"""
+    db_sensors = crud.get_all_sensors(db, **dataclasses.asdict(query_params))
+    return db_sensors
+
+
 ## Measurements
 @router.get("/measurements", response_model=List[schemas.Measurement])
 def all_measurements(query_params: ListQueryParameters = Depends(), db: Session = Depends(get_db)):

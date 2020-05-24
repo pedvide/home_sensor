@@ -10,10 +10,6 @@ def get_magnitude(db: Session, magnitude_id: int) -> Optional[models.Magnitude]:
     return db.query(models.Magnitude).get(magnitude_id)
 
 
-def get_magnitude_by_name(db: Session, name: str) -> Optional[models.Magnitude]:
-    return db.query(models.Magnitude).filter(models.Magnitude.name == name).one_or_none()
-
-
 def create_magnitude(db: Session, magnitude: schemas.MagnitudeCreate) -> models.Magnitude:
     db_magnitude = models.Magnitude(**magnitude.dict())
     db.add(db_magnitude)
@@ -27,6 +23,10 @@ def get_sensor(db: Session, sensor_id: int) -> Optional[models.Sensor]:
     return db.query(models.Sensor).get(sensor_id)
 
 
+def get_all_sensors(db: Session, offset: int = 0, limit: int = 10) -> List[models.Sensor]:
+    return db.query(models.Sensor).order_by(models.Sensor.id)[offset : offset + limit]
+
+
 def get_sensor_by_name(db: Session, name: str) -> Optional[models.Sensor]:
     return db.query(models.Sensor).filter(models.Sensor.name == name).one_or_none()
 
@@ -34,12 +34,7 @@ def get_sensor_by_name(db: Session, name: str) -> Optional[models.Sensor]:
 def create_sensor(db: Session, sensor: schemas.SensorCreate) -> models.Sensor:
     db_sensor = models.Sensor(name=sensor.name)
 
-    db_magnitudes = []
-    for magnitude_in in sensor.magnitudes:
-        magnitude = get_magnitude_by_name(db, magnitude_in.name)
-        if not magnitude:
-            magnitude = create_magnitude(db, magnitude_in)
-        db_magnitudes.append(magnitude)
+    db_magnitudes = [create_magnitude(db, magnitude_in) for magnitude_in in sensor.magnitudes]
     db_sensor.magnitudes = db_magnitudes
 
     db.add(db_sensor)

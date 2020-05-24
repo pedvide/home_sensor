@@ -5,6 +5,7 @@ from typing import List
 class MagnitudeBase(BaseModel):
     name: str
     unit: str
+    precision: float
 
 
 class MagnitudeCreate(MagnitudeBase):

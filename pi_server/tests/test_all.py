@@ -62,8 +62,8 @@ def client():
 
 @pytest.fixture
 def station_zero():
-    mag1 = dict(name="temp", unit="C")
-    mag2 = dict(name="hum", unit="%")
+    mag1 = dict(name="temp", unit="C", precision=0.1)
+    mag2 = dict(name="hum", unit="%", precision=0.5)
     sensor0 = dict(name="am2320", magnitudes=[mag1, mag2])
     station0 = dict(token="asf3r23g2v", location="living room", sensors=[sensor0])
 
@@ -74,14 +74,15 @@ def station_zero():
 
 @pytest.fixture
 def station_one():
-    mag1 = dict(name="temp", unit="C")
-    mag2 = dict(name="hum", unit="%")
+    mag1 = dict(name="temp", unit="C", precision=0.1)
+    mag2 = dict(name="hum", unit="%", precision=0.5)
+    mag3 = dict(name="temp", unit="C", precision=0.05)
     sensor0 = dict(name="am2320", magnitudes=[mag1, mag2])
-    sensor1 = dict(name="temponly", magnitudes=[mag1])
+    sensor1 = dict(name="high_res_temp", magnitudes=[mag3])
     station1 = dict(token="sfsdgsds", location="bedroom", sensors=[sensor0, sensor1])
 
     sensor0_out = dict(id=1, name="am2320", magnitudes=[dict(id=1, **mag1), dict(id=2, **mag2)])
-    sensor1_out = dict(id=2, name="temponly", magnitudes=[dict(id=1, **mag1)])
+    sensor1_out = dict(id=2, name="high_res_temp", magnitudes=[dict(id=3, **mag3)])
     station1_out = dict(
         id=2, token="sfsdgsds", location="bedroom", sensors=[sensor0_out, sensor1_out],
     )
@@ -90,7 +91,6 @@ def station_one():
 
 @pytest.fixture
 def measurement_one(station_zero):
-
     station_in, station_out = station_zero
     sensor_out = station_out["sensors"][0]
     magnitude_out = sensor_out["magnitudes"][0]
@@ -172,6 +172,10 @@ def test_two_stations(client, db_session, station_zero, station_one):
     assert response.status_code == 200
     assert response.json() == [station0_out, station1_out]
 
+    response = client.get("/api/stations?offset=0&limit=1")
+    assert response.status_code == 200
+    assert response.json() == [station0_out]
+
 
 def test_post_same_station_twice(client, db_session, station_zero):
     station0_in, station0_out = station_zero
@@ -236,6 +240,15 @@ def test_modify_station(client, db_session, station_zero, station_one):
     assert response.json() == modified_station_out
 
 
+def test_sensors(client, db_session, station_zero):
+    station_in, station_out = station_zero
+
+    client.post("/api/stations", json=station_in)
+    response = client.get("/api/sensors")
+    assert response.status_code == 200
+    # assert response.json() == [station_out]
+
+
 def test_post_measurement(client, db_session, station_zero, measurement_one):
 
     station_in, _ = station_zero
@@ -243,9 +256,9 @@ def test_post_measurement(client, db_session, station_zero, measurement_one):
 
     client.post("/api/stations", json=station_in)
 
-    response = client.post("/api/stations/1/measurements", json=[m0_in])
+    response = client.post("/api/stations/1/measurements", json=[m0_in, m0_in])
     assert response.status_code == 201
-    assert response.json() == [m0_out]
+    assert response.json() == [m0_out, m0_out]
 
 
 def test_get_measurement(client, db_session, station_zero, measurement_one):

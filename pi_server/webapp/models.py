@@ -1,25 +1,17 @@
-from sqlalchemy import Table, Column, ForeignKey, Integer, String
+from sqlalchemy import Table, Column, ForeignKey, Integer, String, Float
 from sqlalchemy.orm import relationship
 
 from .database import Base
 
 
-sensor_magnitude = Table(
-    "sensor_magnitude",
-    Base.metadata,
-    Column("magnitude_id", Integer, ForeignKey("magnitudes.id"), primary_key=True),
-    Column("sensors_id", Integer, ForeignKey("sensors.id"), primary_key=True),
-)
-
-
 class Magnitude(Base):
     __tablename__ = "magnitudes"
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True, index=True, nullable=False)
+    name = Column(String, index=True, nullable=False)
     unit = Column(String, nullable=False)
-    sensors = relationship(
-        "Sensor", secondary=sensor_magnitude, back_populates="magnitudes", order_by="Sensor.id",
-    )
+    precision = Column(Float, nullable=False)
+    sensor_id = Column(Integer, ForeignKey("sensors.id"))
+    sensor = relationship("Sensor", back_populates="magnitudes")
     measurements = relationship(
         "Measurement",
         back_populates="magnitude",
@@ -40,9 +32,7 @@ class Sensor(Base):
     __tablename__ = "sensors"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True, nullable=False)
-    magnitudes = relationship(
-        "Magnitude", secondary=sensor_magnitude, back_populates="sensors", order_by=Magnitude.id
-    )
+    magnitudes = relationship("Magnitude", back_populates="sensor", order_by=Magnitude.id)
     stations = relationship(
         "Station", secondary=station_sensor, back_populates="sensors", order_by="Station.id",
     )
