@@ -191,7 +191,7 @@ bool setup_station()
 
   response = http.getString(); //Get the response payload
   deserializeJson(station_json_response, response);
-  Serial.printf("HTTP Response: %s.\n", response.c_str());
+  Serial.printf("Station response: %s.\n", response.c_str());
   // Get station, sensors and magnitudes ids
   station_id = station_json_response["id"];
   JsonObject sensor1_out = station_json_response["sensors"][0];
@@ -262,7 +262,8 @@ bool post_measurement(String &data, String endpoint)
   case HTTP_CODE_CREATED:
     return true;
   default:
-    Serial.printf("post_measurement HTTP Error code: %d.\n", httpCode);
+    Serial.println("post_measurement HTTP Error code: " + http.errorToString(httpCode));
+
     return false;
   }
 }
@@ -296,12 +297,12 @@ void send_am2320_data()
   // Serialize JSON document
   String post_data;
   serializeJson(list_measurement, post_data);
-  Serial.println(post_data);
 
   bool success = post_measurement(post_data, station_endpoint + "/measurements");
 
   if (success)
   {
+    Serial.println("Data sent successfully.");
     sensor_am2320_buffer.pop();
   }
 }
