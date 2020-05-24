@@ -113,6 +113,30 @@ def measurement_one(station_zero):
     return m0_in, m0_out
 
 
+@pytest.fixture
+def measurement_two(station_zero):
+    station_in, station_out = station_zero
+    sensor_out = station_out["sensors"][0]
+    magnitude_out = sensor_out["magnitudes"][0]
+
+    m1_in = dict(
+        timestamp=1589231900,
+        magnitude_id=magnitude_out["id"],
+        sensor_id=sensor_out["id"],
+        value="20.3",
+    )
+    m1_out = dict(
+        id=2,
+        station=station_out,
+        sensor=sensor_out,
+        magnitude=magnitude_out,
+        timestamp=1589231900,
+        value="20.3",
+    )
+
+    return m1_in, m1_out
+
+
 def test_index(client):
     response = client.get("/")
     assert response.status_code == 200
@@ -249,16 +273,29 @@ def test_sensors(client, db_session, station_zero):
     # assert response.json() == [station_out]
 
 
-def test_post_measurement(client, db_session, station_zero, measurement_one):
+def test_post_one_measurement(client, db_session, station_zero, measurement_one):
 
     station_in, _ = station_zero
     m0_in, m0_out = measurement_one
 
     client.post("/api/stations", json=station_in)
 
-    response = client.post("/api/stations/1/measurements", json=[m0_in, m0_in])
+    response = client.post("/api/stations/1/measurements", json=[m0_in])
     assert response.status_code == 201
-    assert response.json() == [m0_out, m0_out]
+    assert response.json() == [m0_out]
+
+
+def test_post_two_measurements(client, db_session, station_zero, measurement_one, measurement_two):
+
+    station_in, _ = station_zero
+    m0_in, m0_out = measurement_one
+    m1_in, m1_out = measurement_two
+
+    client.post("/api/stations", json=station_in)
+
+    response = client.post("/api/stations/1/measurements", json=[m0_in, m1_in])
+    assert response.status_code == 201
+    assert response.json() == [m0_out, m1_out]
 
 
 def test_get_measurement(client, db_session, station_zero, measurement_one):
