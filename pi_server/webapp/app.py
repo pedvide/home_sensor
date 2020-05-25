@@ -1,11 +1,10 @@
-from fastapi import FastAPI, Request
-
+from fastapi import FastAPI, Request, Depends
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import arrow
 
-from . import rest_api
-from .database import engine
+from . import rest_api, crud, schemas
+from .database import engine, get_db, Session
 from . import models
 
 models.Base.metadata.create_all(bind=engine)
@@ -30,44 +29,33 @@ def parse_measurement_request(request_json: dict) -> dict:
     """Parse request and return dict with measurement data"""
     date_fmt = "ddd YYYY-MM-DD HH:mm:ss"
     now = arrow.now(timezone)
-    station_id = request_json.get("station_id", "unknown")
-    sensor_id = request_json.get("sensor_id", "unknown")
+    station = request_json.get("station").get("location")
+    sensor = request_json.get("sensor").get("name")
     measurement_datetime = arrow.get(request_json.get("time")).to(timezone)
     measurement = {
-        "station_id": station_id,
-        "sensor_id": sensor_id,
+        "station": str(station),
+        "sensor": str(sensor),
         "measurement_time": f"{measurement_datetime.format(date_fmt)}",
         "measurement_time_offset": f"{measurement_datetime.humanize(now)}",
         "server_time": str(now.format(date_fmt)),
     }
 
-    request_data = request_json.get("data", [])
-    for item in request_data:
-        name = item.get("name")
-        value = item.get("value")
-        unit = item.get("unit")
-        if name and value:
-            formatter = unit_formatters.get(unit, lambda value: str(value))
-            fmt_value = formatter(value)
-            measurement[name] = fmt_value
-
+    measurement["name"] = request_json.get("magnitude").get("name")
+    measurement["unit"] = request_json.get("magnitude").get("unit")
+    value = request_json.get("value")
+    formatter = unit_formatters.get(measurement["unit"], lambda value: str(value))
+    fmt_value = formatter(value)
+    measurement["value"] = fmt_value
     return measurement
 
 
-last_measurement = {
-    "station_id": 0,
-    "sensor_id": 0,
-    "time": 1589231767,
-    "data": [
-        {"name": "temp", "unit": "C", "value": "23.5"},
-        {"name": "hum", "unit": "%", "value": "40"},
-    ],
-}
-
-
 @app.get("/")
-async def index(request: Request):
-    parsed_last_measurement = parse_measurement_request(last_measurement)
+def index(request: Request, db: Session = Depends(get_db)):
+    db_measurement = crud.get_all_measurements(db, limit=1)
+    measurement = schemas.Measurement.from_orm(db_measurement[0]) if db_measurement else {}
+    parsed_last_measurement = (
+        parse_measurement_request(measurement.dict()) if db_measurement else {}
+    )
     return templates.TemplateResponse("index.html", {"request": request, **parsed_last_measurement})
 
 
