@@ -107,8 +107,16 @@ def get_station_measurements(
 
 
 # Measurements
-def get_all_measurements(db: Session, offset: int = 0, limit: int = 10) -> List[models.Measurement]:
-    return db.query(models.Measurement).all()[offset : offset + limit]
+def get_all_measurements(
+    db: Session, order: str = "timestamp", offset: int = 0, limit: int = 10
+) -> List[models.Measurement]:
+    return (
+        db.query(models.Measurement)
+        .order_by(getattr(models.Measurement, order, "timestamp").desc())
+        .limit(limit)
+        .offset(offset)
+        .all()
+    )
 
 
 def create_measurement(

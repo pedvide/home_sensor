@@ -109,7 +109,11 @@ def all_sensors(query_params: ListQueryParameters = Depends(), db: Session = Dep
 
 ## Measurements
 @router.get("/measurements", response_model=List[schemas.Measurement])
-def all_measurements(query_params: ListQueryParameters = Depends(), db: Session = Depends(get_db)):
+def all_measurements(
+    query_params: ListQueryParameters = Depends(),
+    order: str = "timestamp",
+    db: Session = Depends(get_db),
+):
     """Return all measurements that match the query"""
-    db_measurements = crud.get_all_measurements(db, **dataclasses.asdict(query_params))
+    db_measurements = crud.get_all_measurements(db, order=order, **dataclasses.asdict(query_params))
     return db_measurements
