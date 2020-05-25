@@ -32,12 +32,12 @@ p {
   padding-left: 1px;
 }
 
-.station-id {
+.station {
   font-size: 1rem;
   vertical-align: middle;
   /* padding-bottom: 15px; */
 }
-.sensor-id {
+.sensor {
   font-size: 1rem;
   vertical-align: middle;
   /* padding-bottom: 15px; */
