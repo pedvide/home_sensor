@@ -17,7 +17,9 @@ def db_engine():
     if database_path.exists():
         database_path.unlink()
 
-    engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+    engine = create_engine(
+        SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}, echo=False
+    )
     Base.metadata.create_all(bind=engine)
 
     yield engine

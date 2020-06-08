@@ -56,12 +56,12 @@ def change_station(
     station_id: int, new_station: schemas.StationCreate, db: Session = Depends(get_db),
 ):
     """Return 204 if change succeded"""
-    old_station = crud.get_station(db, station_id)
+    db_old_station = crud.get_station(db, station_id)
 
-    if not old_station:
+    if not db_old_station:
         raise HTTPException(404, "Station not found")
 
-    crud.change_station(db, old_station, new_station)
+    crud.change_station(db, db_old_station, new_station)
 
 
 @router.get("/stations/{station_id}/measurements", response_model=List[schemas.Measurement])
