@@ -1,6 +1,7 @@
 from . import models, schemas
 from .database import Session
 from typing import List, Optional
+from datetime import datetime
 
 # from pprint import pprint
 
@@ -45,18 +46,37 @@ def create_sensor(db: Session, sensor: schemas.SensorCreate) -> models.Sensor:
 
 # Stations
 def get_station(db: Session, station_id: int) -> Optional[models.Station]:
-    return db.query(models.Station).get(station_id)
+    return (
+        db.query(models.Station)
+        .filter(models.Station.id == station_id)
+        .filter(models.Station.valid_until.is_(None))
+        .one_or_none()
+    )
 
 
 def get_station_by_token(db: Session, token: str) -> Optional[models.Station]:
-    return db.query(models.Station).filter(models.Station.token == token).one_or_none()
+    return (
+        db.query(models.Station)
+        .filter(models.Station.token == token)
+        .filter(models.Station.valid_until.is_(None))
+        .one_or_none()
+    )
 
 
 def get_all_stations(db: Session, offset: int = 0, limit: int = 10) -> List[models.Station]:
-    return db.query(models.Station).order_by(models.Station.id)[offset : offset + limit]
+    return (
+        db.query(models.Station)
+        .filter(models.Station.valid_until.is_(None))
+        .order_by(models.Station.id)
+        .limit(limit)
+        .offset(offset)
+        .all()
+    )
 
 
-def create_station(db: Session, station: schemas.StationCreate) -> models.Station:
+def _create_station(db: Session, station: schemas.StationCreate) -> models.Station:
+    """Create and return a station but don't add it to the DB."""
+
     db_station = models.Station(location=station.location, token=station.token)
 
     db_sensors = []
@@ -67,32 +87,32 @@ def create_station(db: Session, station: schemas.StationCreate) -> models.Statio
         db_sensors.append(sensor)
     db_station.sensors = db_sensors
 
+    return db_station
+
+
+def create_station(db: Session, station: schemas.StationCreate) -> models.Station:
+
+    db_station = _create_station(db, station)
     db.add(db_station)
     db.commit()
     db.refresh(db_station)
+
     return db_station
 
 
 def change_station(
-    db: Session, old_station: models.Station, new_station: schemas.StationCreate
+    db: Session, db_old_station: models.Station, new_station: schemas.StationCreate
 ) -> None:
-    old_station.location = new_station.location
+    # create a new station but with the same id
+    db_new_station = _create_station(db, new_station)
+    db_old_station.valid_until = datetime.now()
+    db_new_station.id = db_old_station.id
 
-    db_sensors = []
-    for sensor_in in new_station.sensors:
-        sensor = get_sensor_by_name(db, sensor_in.name)
-        if not sensor:
-            sensor = create_sensor(db, sensor_in)
-        db_sensors.append(sensor)
-    old_station.sensors = db_sensors
-
+    db.add(db_new_station)
     db.commit()
+    db.refresh(db_new_station)
 
-
-def delete_station(db: Session, station_id: int) -> None:
-    db_station = db.query(models.Station).get(station_id)
-    db.delete(db_station)
-    db.commit()
+    return db_new_station
 
 
 def get_station_measurements(
