@@ -116,13 +116,17 @@ def change_station(
 
 
 def get_station_measurements(
-    db: Session, station_id: int, offset: int = 0, limit: int = 10
+    db: Session, station_id: int, order: str = "timestamp", offset: int = 0, limit: int = 10
 ) -> List[models.Measurement]:
     return (
         db.query(models.Station)
         .filter(models.Station.id == station_id)
+        .filter(models.Station.valid_until.is_(None))
         .one()
-        .measurements[offset : offset + limit]
+        .measurements.order_by(getattr(models.Measurement, order, "timestamp").desc())
+        .limit(limit)
+        .offset(offset)
+        .all()
     )
 
 
