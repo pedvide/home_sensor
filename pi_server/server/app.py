@@ -13,5 +13,5 @@ app.include_router(rest_api.router, prefix="/api")
 # redirect port 8080 to 80 (only available to root) with:
 # sudo iptables -A PREROUTING -t nat -p tcp --dport 80 -j REDIRECT --to-ports 8080
 # sudo iptables-save
-# run locally uvicorn webapp.app:app --reload
-# run in the pi with uvicorn webapp.app:app --reload --port 8080 --host 0.0.0.0
+# run locally uvicorn server.app:app --reload -port 8080
+# run in the pi with uvicorn server.app:app --reload --port 8080 --host 0.0.0.0
