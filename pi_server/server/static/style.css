@@ -15,7 +15,8 @@ p {
 .data-row {
   margin: auto;
   font-size: 1.2rem;
-  display: inline-block;
+  /* display: inline-block; */
+  list-style: none;
 }
 .fas {
   margin-left: 10px;

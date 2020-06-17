@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      rel="stylesheet"
+      href="https://use.fontawesome.com/releases/v5.7.2/css/all.css"
+      integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}" />
+    <script src="{{ url_for('static', path='moment.min.js') }}"></script>
+    <title>Home Sensor</title>
+  </head>
+  <body>
+    <h2>Last measurement</h2>
+    <ul id="measurement-list"></ul>
+
+    <div class="footer">
+      The date and time on the server is:
+      <span id="server-time">{{ server_time }}</span>
+    </div>
+    <script>
+      const refresh_rate = 2000;
+      const num_measurements = 10;
+      setInterval(function () {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+          if (this.readyState == 4 && this.status == 200) {
+            const measurement_list = JSON.parse(this.responseText);
+            for (let index = 0; index < measurement_list.length; index++) {
+              const recv_data = measurement_list[index];
+              // console.log(data);
+              data = {};
+              data.station_location = recv_data.station.location;
+              data.sensor_name = recv_data.sensor.name;
+              data.time = moment.unix(recv_data.timestamp).utc().fromNow();
+              data.name = recv_data.magnitude.name;
+              data.value = recv_data.value;
+              data.unit = recv_data.magnitude.unit;
+
+              var ul = document.getElementById("measurement-list");
+              var li = create_list_elem(data);
+              if (index < ul.childElementCount) {
+                ul.removeChild(ul.childNodes[index]);
+              }
+              ul.appendChild(li);
+            }
+            const now = moment();
+            document.getElementById("server-time").innerHTML = now.toString();
+          }
+        };
+        xhttp.open(
+          "GET",
+          `/api/measurements?limit=${num_measurements}`,
+          (async = true)
+        );
+        xhttp.send();
+      }, refresh_rate);
+      function create_list_elem(data) {
+        const text = `
+                <i class="fas fa-map-marker-alt"></i>
+                <span id="station-location" class="station">${data.station_location}</span>
+                <i class="fas fa-id-card" style="color:#000000;"></i>
+                <span id="sensor" class="sensor">${data.sensor_name}</span>
+                <i class="fas fa-clock" style="color:#000000;"></i>
+                <span id="measurement_time" class="time">${data.time}</span>
+                <span class="measurement">
+                    <i class="fas fa-ruler-vertical" style="color:#000000;"></i>
+                    <span class="name" id="name">${data.name}</span>
+                    <span class="magnitude" id="value">${data.value}</span>
+                    <span class="unit" id="unit">${data.unit}</span>
+                </span>
+                `;
+        var li = document.createElement("li");
+        li.setAttribute("class", "data-row");
+        li.innerHTML = text;
+        return li;
+      }
+    </script>
+  </body>
+</html>
