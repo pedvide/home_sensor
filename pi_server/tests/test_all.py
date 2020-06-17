@@ -1,7 +1,7 @@
 from fastapi.testclient import TestClient
 
-from webapp.app import app as app
-from webapp.database import get_db, create_engine, sessionmaker, Base
+from server.app import app as app
+from server.database import get_db, create_engine, sessionmaker, Base
 
 from pathlib import Path
 import pytest
@@ -137,12 +137,6 @@ def measurement_two(station_zero):
     )
 
     return m1_in, m1_out
-
-
-def test_index(client):
-    response = client.get("/")
-    assert response.status_code == 200
-    assert response.headers["Content-Type"] == "text/html; charset=utf-8"
 
 
 def test_one_station(client, db_session, station_zero):
