@@ -57,3 +57,5 @@ Start nginx service:
 ```bash
 sudo systemctl start nginx.service
 ```
+
+Go to `<hostname>` to see web app.

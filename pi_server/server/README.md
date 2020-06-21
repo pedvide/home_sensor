@@ -2,20 +2,11 @@
 
 ## Deployment for raspberry pi
 
-run locally
+Copy server folder with rsync.
+Test that it runs with
 
 ```
-uvicorn server.app:app --reload -port 8080
+$ gunicorn -k uvicorn.workers.UvicornWorker server.app:app --reload --bind 0.0.0.0:8080 -w 1 --access-logfile -
 ```
 
-Run in the pi with
-
-```
-uvicorn server.app:app --reload --port 8080 --host 0.0.0.0
-```
-
-or
-
-```
-gunicorn -k uvicorn.workers.UvicornWorker server.app:app --reload --bind 0.0.0.0:8080 -w 2 --access-logfile -
-```
+Go to `<hostname>:8080/api/docs` to see docs page.
