@@ -1,8 +1,13 @@
 env
+
 __pycache__
 *.pyc
-.vscode
-workspace.code-workspace
+
 *.egg-info
 .mypy_cache
 pip-wheel-metadata
+
+.vscode
+
+node_modules/
+/dist/
