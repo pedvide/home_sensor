@@ -15,10 +15,10 @@ module.exports = {
     "no-console": "off",
     "no-debugger": "off",
     quotes: [2, "double"],
-    "vue/singleline-html-element-content-newline": ["ignore"],
-    "vue/multiline-html-element-content-newline": ["ignore"],
+    "vue/singleline-html-element-content-newline": [0],
+    "vue/multiline-html-element-content-newline": [0],
     "vue/html-self-closing": [
-      "error",
+      2,
       {
         html: {
           void: "any",
