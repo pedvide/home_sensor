@@ -2,6 +2,8 @@
 
 ## Deployment
 
+Install packages in requirements.txt
+
 ### Deploy server
 
 Copy server folder with rsync.
