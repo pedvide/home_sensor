@@ -50,6 +50,7 @@ ExecStart=/home/pedvide/home_sensor/env/bin/gunicorn \
           --workers 1 \
           --bind unix:/run/home_sensor_backend.sock \
           -k uvicorn.workers.UvicornWorker \
+          --name home_sensor_backend \
           server.app:app
 
 [Install]
