@@ -222,36 +222,25 @@ def test_post_same_station_twice(client, db_session, station_zero):
     assert response.json() == [station0_out]
 
 
-def test_modify_station(client, db_session, station_zero, station_one):
-    """Create a station0, then modify it using station1's sensors"""
+def test_modify_station_sensors(client, db_session, station_zero, station_one):
+    """Create a station1, then set it to have station0's sensors"""
     station0_in, station0_out = station_zero
-
     station1_in, station1_out = station_one
-    sensors1_in = station1_in["sensors"]
-    sensors1_out = station1_out["sensors"]
 
     modified_station_in = dict()
-    modified_station_in["token"] = station0_in["token"]
-    modified_station_in["location"] = "kitchen"
-    modified_station_in["sensors"] = sensors1_in
+    modified_station_in["token"] = station1_in["token"]
+    modified_station_in["location"] = station1_in["location"]
+    modified_station_in["sensors"] = station0_in["sensors"]
     modified_station_out = dict()
-    modified_station_out["id"] = station0_out["id"]
-    modified_station_out["token"] = station0_out["token"]
-    modified_station_out["location"] = "kitchen"
-    modified_station_out["sensors"] = sensors1_out
+    modified_station_out["id"] = 1
+    modified_station_out["token"] = station1_out["token"]
+    modified_station_out["location"] = station1_out["location"]
+    modified_station_out["sensors"] = station0_out["sensors"]
 
     # create station first
-    response = client.post("/api/stations", json=station0_in)
-    assert response.status_code == 201
-    assert "location" in response.headers
-    assert response.headers["location"] == "1"
-    assert response.json() == station0_out
+    response = client.post("/api/stations", json=station1_in)
 
-    response = client.get("/api/stations")
-    assert response.status_code == 200
-    assert response.json() == [station0_out]
-
-    # PUT with new location and sensors
+    # PUT with updated sensors
     response = client.put("/api/stations/1", json=modified_station_in)
     assert response.status_code == 204
 
