@@ -5,16 +5,25 @@ from sqlalchemy.orm import relationship
 from .database import Base
 
 
+
 class Magnitude(Base):
     __tablename__ = "magnitudes"
     id = Column(Integer, primary_key=True, index=True)
+
     created_at = Column(DateTime, nullable=False, server_default=text("(CURRENT_TIMESTAMP)"))
     name = Column(String, index=True, nullable=False)
     unit = Column(String, nullable=False)
     precision = Column(Float, nullable=False)
     sensor_id = Column(Integer, ForeignKey("sensors.id"))
+
     sensor = relationship("Sensor", back_populates="magnitudes")
     measurements = relationship("Measurement", back_populates="magnitude", lazy="dynamic")
+
+    def __repr__(self):
+        return (
+            f"Magnitude(id: {self.id}, name={self.name}, "
+            f"unit={self.unit}, sensor_id={self.sensor_id})"
+        )
 
 
 class StationSensor(Base):
@@ -34,6 +43,9 @@ class Sensor(Base):
     magnitudes = relationship("Magnitude", back_populates="sensor")
     stations = relationship("Station", secondary="stations_sensors", back_populates="sensors")
     measurements = relationship("Measurement", back_populates="sensor", lazy="dynamic")
+
+    def __repr__(self):
+        return f"Sensor(id={self.id}, name={self.name})"
 
 
 class Station(Base):
@@ -55,15 +67,26 @@ class Station(Base):
     sensors = relationship("Sensor", secondary="stations_sensors", back_populates="stations")
     measurements = relationship("Measurement", back_populates="station", lazy="dynamic")
 
+    def __repr__(self):
+        return f"Station(id={self.id}, token={self.token}, location={self.location})"
+
 
 class Measurement(Base):
     __tablename__ = "measurements"
+
     id = Column(Integer, primary_key=True, index=True)
+
     timestamp = Column(Integer, nullable=False, index=True)
     value = Column(String, nullable=False)
-    station_id = Column(Integer, ForeignKey("stations.row_id"), nullable=False)
+
+    station_id = Column(Integer, ForeignKey("stations.id"), nullable=False)
     station = relationship("Station", back_populates="measurements")
     sensor_id = Column(Integer, ForeignKey("sensors.id"), nullable=False)
     sensor = relationship("Sensor", back_populates="measurements")
     magnitude_id = Column(Integer, ForeignKey("magnitudes.id"), nullable=False)
     magnitude = relationship("Magnitude", back_populates="measurements")
+
+    def __repr__(self):
+        return f"Measurement(id={self.id}, timestamp={self.timestamp}, value={self.value})"
+
+
