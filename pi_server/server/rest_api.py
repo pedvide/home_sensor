@@ -40,7 +40,9 @@ def create_station(
     """Body must contain hash(mac).
     Return 201 + station if it didn't exist.
     Return 200 + station if it already existed."""
-    db_station = crud.get_station_by_token(db, token=station.token)
+    db_station = crud.get_station_by_token_and_location(
+        db, token=station.token, location=station.location
+    )
 
     if db_station:
         response.status_code = 200
@@ -56,12 +58,12 @@ def change_station(
     station_id: int, new_station: schemas.StationCreate, db: Session = Depends(get_db),
 ):
     """Return 204 if change succeded"""
-    db_old_station = crud.get_station(db, station_id)
+    db_station = crud.get_station(db, station_id)
 
-    if not db_old_station:
+    if not db_station:
         raise HTTPException(404, "Station not found")
 
-    crud.change_station(db, db_old_station, new_station)
+    crud.change_station(db, db_station, new_station)
 
 
 @router.get("/stations/{station_id}/measurements", response_model=List[schemas.Measurement])
