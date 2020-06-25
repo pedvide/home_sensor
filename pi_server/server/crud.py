@@ -25,7 +25,7 @@ def get_sensor(db: Session, sensor_id: int) -> Optional[models.Sensor]:
 
 
 def get_all_sensors(db: Session, offset: int = 0, limit: int = 10) -> List[models.Sensor]:
-    return db.query(models.Sensor).order_by(models.Sensor.id)[offset : offset + limit]
+    return db.query(models.Sensor).order_by(models.Sensor.id).limit(limit).offset(offset).all()
 
 
 def get_sensor_by_name(db: Session, name: str) -> Optional[models.Sensor]:
@@ -46,52 +46,38 @@ def create_sensor(db: Session, sensor: schemas.SensorCreate) -> models.Sensor:
 
 # Stations
 def get_station(db: Session, station_id: int) -> Optional[models.Station]:
-    return (
-        db.query(models.Station)
-        .filter(models.Station.id == station_id)
-        .filter(models.Station.valid_until.is_(None))
-        .one_or_none()
-    )
+    return db.query(models.Station).get(station_id)
 
 
-def get_station_by_token(db: Session, token: str) -> Optional[models.Station]:
+def get_station_by_token_and_location(
+    db: Session, token: str, location: str
+) -> Optional[models.Station]:
     return (
         db.query(models.Station)
         .filter(models.Station.token == token)
-        .filter(models.Station.valid_until.is_(None))
+        .filter(models.Station.location == location)
         .one_or_none()
     )
 
 
 def get_all_stations(db: Session, offset: int = 0, limit: int = 10) -> List[models.Station]:
-    return (
-        db.query(models.Station)
-        .filter(models.Station.valid_until.is_(None))
-        .order_by(models.Station.id)
-        .limit(limit)
-        .offset(offset)
-        .all()
-    )
+    return db.query(models.Station).order_by(models.Station.id).limit(limit).offset(offset).all()
 
 
 def _create_station(db: Session, station: schemas.StationCreate) -> models.Station:
     """Create and return a station but don't add it to the DB."""
+    db_station = models.Station(location=station.location, token=station.token, sensors=[])
 
-    db_station = models.Station(location=station.location, token=station.token)
-
-    db_sensors = []
     for sensor_in in station.sensors:
         sensor = get_sensor_by_name(db, sensor_in.name)
         if not sensor:
             sensor = create_sensor(db, sensor_in)
-        db_sensors.append(sensor)
-    db_station.sensors = db_sensors
+        db_station.add_sensor(sensor)
 
     return db_station
 
 
 def create_station(db: Session, station: schemas.StationCreate) -> models.Station:
-
     db_station = _create_station(db, station)
     db.add(db_station)
     db.commit()
@@ -120,9 +106,7 @@ def get_station_measurements(
 ) -> List[models.Measurement]:
     return (
         db.query(models.Station)
-        .filter(models.Station.id == station_id)
-        .filter(models.Station.valid_until.is_(None))
-        .one()
+        .get(station_id)
         .measurements.order_by(getattr(models.Measurement, order, "timestamp").desc())
         .limit(limit)
         .offset(offset)
