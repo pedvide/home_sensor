@@ -263,7 +263,7 @@ def test_sensors(client, db_session, station_zero):
     client.post("/api/stations", json=station_in)
     response = client.get("/api/sensors")
     assert response.status_code == 200
-    # assert response.json() == [station_out]
+    assert response.json() == station_out["sensors"]
 
 
 def test_post_one_measurement(client, db_session, station_zero, measurement_one):
