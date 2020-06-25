@@ -136,3 +136,73 @@ class Measurement(Base):
         return f"Measurement(id={self.id}, timestamp={self.timestamp}, value={self.value})"
 
 
+# Base.metadata.create_all(bind=engine)
+# db = SessionLocal()
+# m = Magnitude(name="temp", unit="C", precision="2")
+# db.add(m)
+# db.commit()
+# db.refresh(m)
+# db.query(Magnitude).all()
+
+# s = Sensor(name="AM")
+# db.add(s)
+# db.commit()
+# db.refresh(s)
+# db.query(Sensor).all()
+
+# s.magnitudes.append(m)
+# db.commit()
+# s.magnitudes
+
+# st = Station(token="asdasdas", location="32vfwf")
+# db.add(st)
+# db.commit()
+# db.refresh(st)
+# db.query(Station).all()
+
+# st_s = StationSensor(sensor=s, station=st)
+# db.add(st_s)
+# db.commit()
+# db.refresh(st_s)
+# db.query(StationSensor).all()
+# from datetime import datetime
+# (
+#     db.query(Sensor)
+#     .filter(Sensor.stations_sensors_rel.any(StationSensor.created_at > datetime(2020, 6, 10)))
+#     .all()
+# )
+# (
+#     db.query(Sensor)
+#     .filter(Sensor.stations_sensors_rel.any(StationSensor.valid_until.is_(None)))
+#     .all()
+# )
+# (
+#     db.query(Sensor)
+#     .filter(Sensor.stations_sensors_rel.any(StationSensor.valid_until < datetime(2020, 6, 10)))
+#     .all()
+# )
+
+# s2 = Sensor(name="DFBSEDF")
+# db.add(s2)
+# db.commit()
+# st2 = Station(token="sdge34tg", location="hsdv")
+# db.add(st2)
+# db.commit()
+
+# st2.sensors.add_sensor(s2)
+# db.commit()
+# db.query(StationSensor).all()
+# (
+#     db.query(Sensor)
+#     .filter(Sensor.stations_sensors_rel.any(StationSensor.station == st))
+#     .all()
+# )
+
+# st2.sensors.add_sensor(s)
+# db.commit()
+# db.query(StationSensor).all()
+# (
+#     db.query(StationSensor)
+#     .filter(StationSensor.sensor == s2, StationSensor.station == st2)
+#     .one().valid_until
+# ) = datetime.now()
