@@ -53,27 +53,64 @@ def create_station(
     return db_station
 
 
-@router.put("/stations/{station_id}", status_code=204)
-def change_station(
-    station_id: int, new_station: schemas.StationCreate, db: Session = Depends(get_db),
-):
-    """Return 204 if change succeded"""
-    db_station = crud.get_station(db, station_id)
-
-    if not db_station:
-        raise HTTPException(404, "Station not found")
-
-    crud.change_station(db, db_station, new_station)
+### Station sensors
 
 
 @router.get("/stations/{station_id}/sensors", response_model=List[schemas.Sensor])
 def station_sensors(
     station_id: int, query_params: ListQueryParameters = Depends(), db: Session = Depends(get_db)
 ):
+    db_station = crud.get_station(db, station_id)
+    if not db_station:
+        raise HTTPException(404, "Station not found")
+    db_sensors = crud.get_station_sensors(db, db_station, **dataclasses.asdict(query_params))
+    return db_sensors
+
+
+@router.post("/stations/{station_id}/sensors", status_code=201, response_model=schemas.Sensor)
+def create_station_sensor(
+    station_id: int, sensor: schemas.SensorCreate, response: Response, db: Session = Depends(get_db)
+):
+    """
+    Return 201 + sensor if it didn't exist.
+    Return 200 + sensor if it already existed."""
+
+    db_station = crud.get_station(db, station_id)
+    if not db_station:
+        raise HTTPException(404, "Station not found")
+
+    db_sensor = crud.get_sensor_by_name(db, name=sensor.name)
+
+    if db_sensor:
+        response.status_code = 200
+    else:
+        db_sensor = crud.create_station_sensor(db, db_station, sensor)
+
+    response.headers["Location"] = str(db_sensor.id)
+    return db_sensor
+
+
+@router.get("/stations/{station_id}/sensors/{sensor_id}", response_model=schemas.Sensor)
+def station_sensor(station_id: int, sensor_id: int, db: Session = Depends(get_db)):
+    db_station = crud.get_station(db, station_id)
+    if not db_station:
+        raise HTTPException(404, "Station not found")
+    if not crud.get_sensor(db, sensor_id):
+        raise HTTPException(404, "Sensor not found")
+    db_sensor = crud.get_station_sensor(db, db_station, sensor_id)
+    return db_sensor
+
+
+@router.delete("/stations/{station_id}/sensors/{sensor_id}", response_model=schemas.Sensor)
+def delete_station_sensor(station_id: int, sensor_id: int, db: Session = Depends(get_db)):
     if not crud.get_station(db, station_id):
         raise HTTPException(404, "Station not found")
-    db_sensors = crud.get_station_sensors(db, station_id, **dataclasses.asdict(query_params))
-    return db_sensors
+    if not crud.get_sensor(db, sensor_id):
+        raise HTTPException(404, "Sensor not found")
+    crud.delete_station_sensor(db, station_id, sensor_id)
+
+
+### Station measurements
 
 
 @router.get("/stations/{station_id}/measurements", response_model=List[schemas.Measurement])

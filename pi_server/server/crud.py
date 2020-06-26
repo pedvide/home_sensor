@@ -64,21 +64,8 @@ def get_all_stations(db: Session, offset: int = 0, limit: int = 10) -> List[mode
     return db.query(models.Station).order_by(models.Station.id).limit(limit).offset(offset).all()
 
 
-def _create_station(db: Session, station: schemas.StationCreate) -> models.Station:
-    """Create and return a station but don't add it to the DB."""
-    db_station = models.Station(location=station.location, token=station.token, sensors=[])
-
-    for sensor_in in station.sensors:
-        sensor = get_sensor_by_name(db, sensor_in.name)
-        if not sensor:
-            sensor = create_sensor(db, sensor_in)
-        db_station.add_sensor(sensor)
-
-    return db_station
-
-
 def create_station(db: Session, station: schemas.StationCreate) -> models.Station:
-    db_station = _create_station(db, station)
+    db_station = models.Station(location=station.location, token=station.token)
     db.add(db_station)
     db.commit()
     db.refresh(db_station)
@@ -86,49 +73,31 @@ def create_station(db: Session, station: schemas.StationCreate) -> models.Statio
     return db_station
 
 
-def remove_sensor_from_station(
-    db: Session, sensor: schemas.Sensor, station: schemas.Station
-) -> None:
-    station_sensor = (
-        db.query(models.StationSensor)
-        .filter(models.StationSensor.sensor == sensor, models.StationSensor.station == station)
-        .one()
-    )
-    station_sensor.valid_until = datetime.now()
-    db.commit()
-
-
-def change_station(
-    db: Session, db_station: models.Station, new_station: schemas.StationCreate
-) -> None:
-    """Change the station sensors to match new_station's"""
-    # create non-existing sensors
-    new_sensors = []
-    for new_sensor in new_station.sensors:
-        sensor = get_sensor_by_name(db, name=new_sensor.name)
-        if not sensor:
-            sensor = create_sensor(db, new_sensor)
-            new_sensors.append(sensor)
-
-    # remove current sensors that are not in new_station.sensors
-    sensor_names = {sensor.name for sensor in new_station.sensors}
-    current_sensor_names = {sensor.name for sensor in db_station.sensors}
-    sensor_names_to_delete = current_sensor_names.difference(sensor_names)
-    sensors_to_delete = [get_sensor_by_name(db, name=name) for name in sensor_names_to_delete]
-    for db_sensor in sensors_to_delete:
-        remove_sensor_from_station(db, db_sensor, db_station)
-
-    db_station.add_sensors(new_sensors)
-    db.commit()
-    db.refresh(db_station)
-
-    return db_station
-
-
 def get_station_sensors(
-    db: Session, station_id: int, offset: int = 0, limit: int = 10
+    db: Session, db_station: models.Station, offset: int = 0, limit: int = 10
 ) -> List[models.Sensor]:
-    return db.query(models.Station).get(station_id).sensors[offset:limit]
+    return db_station.sensors[offset:limit]
+
+
+def get_station_sensor(db: Session, db_station: models.Station, sensor_id: int) -> models.Sensor:
+    return [sensor for sensor in db_station.sensors if sensor.id == sensor_id][0]
+
+
+def create_station_sensor(
+    db: Session, db_station: models.Station, sensor: schemas.SensorCreate
+) -> models.Sensor:
+    db_sensor = create_sensor(db, sensor)
+    db_station.add_sensor(db_sensor)
+
+    db.commit()
+    db.refresh(db_sensor)
+    return db_sensor
+
+
+def delete_station_sensor(db: Session, db_station: models.Station, sensor_id: int) -> None:
+    db_sensor_station = get_station_sensor(db, db_station, sensor_id)
+    db_sensor_station.valid_until = datetime.now()
+    db.commit()
 
 
 def get_station_measurements(
