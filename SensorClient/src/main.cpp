@@ -21,8 +21,9 @@ const char *location = "living room";
 //// Main server
 const char *server = SERVER_HOSTNAME;
 const char *stations_endpoint = "/api/stations";
-String station_endpoint;
+String station_endpoint, sensors_endpoint;
 uint8_t station_id;
+uint8_t sensor_ids[1];
 const uint8_t port = 80;
 
 //// Time
@@ -32,19 +33,19 @@ Timezone Amsterdam;
 const uint32_t sensor_period_s = 10;
 void measure_sensors();
 Ticker measurement_timer(measure_sensors, sensor_period_s * 1e3, 0, MILLIS);
+typedef struct
+{
+  time_t epoch;
+  uint8_t magnitude_id;
+  char value[50];
+} SensorData;
+SensorData sensor_data;
+CircularBuffer<SensorData, 255> sensor_buffer; // Keep some raw data
 
 // AM2320 Sensor
 uint8_t am2320_sensor_id, am2320_temp_id, am2320_hum_id;
 const char *sensor_am2320_name = "AM2320";
-typedef struct
-{
-  time_t epoch;
-  float temperature;
-  float humidity;
-} SensorAM2320Data;
-SensorAM2320Data sensor_data;
 float temperature, humidity;
-CircularBuffer<SensorAM2320Data, 255> sensor_am2320_buffer; // Keep some raw data
 Adafruit_AM2320 am2320 = Adafruit_AM2320();
 
 //// Post request
@@ -110,18 +111,66 @@ bool setup_station()
   }
 
   // Prepare JSON document
-  const size_t capacity = JSON_ARRAY_SIZE(1) + JSON_ARRAY_SIZE(2) + JSON_OBJECT_SIZE(2) + 3 * JSON_OBJECT_SIZE(3);
-  DynamicJsonDocument station_json(capacity + 200);
-  const size_t response_capacity = JSON_ARRAY_SIZE(1) + JSON_ARRAY_SIZE(2) + JSON_OBJECT_SIZE(3) + 3 * JSON_OBJECT_SIZE(4);
-  DynamicJsonDocument station_json_response(response_capacity + 200);
+  const size_t capacity = JSON_OBJECT_SIZE(2);
+  DynamicJsonDocument station_json(capacity + 50);
 
   station_json["token"] = mac_sha;
   station_json["location"] = location;
-  JsonArray sensors_in = station_json.createNestedArray("sensors");
 
-  JsonObject sensor1_in = sensors_in.createNestedObject();
-  sensor1_in["name"] = sensor_am2320_name;
-  JsonArray sensor_1_in_magnitudes = sensor1_in.createNestedArray("magnitudes");
+  // Serialize JSON document
+  String station_data;
+  serializeJson(station_json, station_data);
+
+  // post data, if the response is 201 then it was created
+  // If it was 200 then it was already there.
+  int post_httpCode;
+
+  http.begin(client, server, port, stations_endpoint);
+  http.addHeader("Content-Type", "application/json");
+  const char *headerNames[] = {"Location"};
+  http.collectHeaders(headerNames, sizeof(headerNames) / sizeof(headerNames[0]));
+
+  post_httpCode = http.POST(station_data); //Send the request
+  Serial.printf("POST HTTP code: %d.\n", post_httpCode);
+  switch (post_httpCode)
+  {
+  case HTTP_CODE_OK: // Station already existed
+    break;
+  case HTTP_CODE_CREATED: // Station created
+    break;
+  default:
+    http.end();
+    return false;
+  }
+
+  station_id = http.header("Location").toInt();
+  station_endpoint = String(stations_endpoint) + "/" + station_id;
+  sensors_endpoint = String(stations_endpoint) + "/" + station_id + "/sensors";
+
+  Serial.printf("station_id: %d.\n", station_id);
+
+  http.end();
+  return true;
+}
+
+bool setup_am2320_sensor()
+{
+  if (WiFi.status() != WL_CONNECTED)
+  {
+    connect_to_wifi();
+    return false;
+  }
+
+  const int num_magnitudes = 2;
+
+  // Prepare JSON document
+  const size_t capacity = JSON_OBJECT_SIZE(2) + JSON_ARRAY_SIZE(num_magnitudes) + num_magnitudes * JSON_OBJECT_SIZE(3);
+  DynamicJsonDocument am2320_json(capacity + 200);
+  const size_t response_capacity = JSON_OBJECT_SIZE(3) + num_magnitudes * JSON_ARRAY_SIZE(2) + num_magnitudes * JSON_OBJECT_SIZE(4);
+  DynamicJsonDocument am2320_json_response(response_capacity + 200);
+
+  am2320_json["name"] = sensor_am2320_name;
+  JsonArray sensor_1_in_magnitudes = am2320_json.createNestedArray("magnitudes");
 
   JsonObject mag1_in = sensor_1_in_magnitudes.createNestedObject();
   mag1_in["name"] = "temperature";
@@ -134,53 +183,23 @@ bool setup_station()
   mag2_in["precision"] = 0.1;
 
   // Serialize JSON document
-  String station_data;
-  serializeJson(station_json, station_data);
+  String am2320_data;
+  serializeJson(am2320_json, am2320_data);
 
-  // First post data, if the response is 201 then it was created
-  // If it was 200 then it was already there,
-  // send again as PUT to update
-  int post_httpCode, put_httpCode, get_httpCode;
+  // post data, if the response is 201 then it was created
+  // If it was 200 then it was already there
+  int post_httpCode;
 
-  http.begin(client, server, port, stations_endpoint);
+  http.begin(client, server, port, sensors_endpoint);
   http.addHeader("Content-Type", "application/json");
   const char *headerNames[] = {"Location"};
   http.collectHeaders(headerNames, sizeof(headerNames) / sizeof(headerNames[0]));
 
-  post_httpCode = http.POST(station_data); //Send the request
+  post_httpCode = http.POST(am2320_data); //Send the request
   Serial.printf("POST HTTP code: %d.\n", post_httpCode);
   switch (post_httpCode)
   {
   case HTTP_CODE_OK: // Station already existed
-    // PUT and then GET the station to update location/sensors/etc.
-    station_id = http.header("Location").toInt();
-    station_endpoint = String(stations_endpoint) + "/" + station_id;
-    http.end();
-    http.begin(client, server, port, station_endpoint);
-    http.addHeader("Content-Type", "application/json");
-    put_httpCode = http.PUT(station_data); //Send the request
-    Serial.printf("PUT HTTP code: %d.\n", put_httpCode);
-    switch (put_httpCode)
-    {
-    case HTTP_CODE_NO_CONTENT: // PUT succesful
-      http.end();
-      http.begin(client, server, port, station_endpoint);
-      http.addHeader("Content-Type", "application/json");
-      get_httpCode = http.GET(); //Send the request
-      Serial.printf("GET HTTP code: %d.\n", get_httpCode);
-      switch (get_httpCode)
-      {
-      case HTTP_CODE_OK: // Got the station
-        break;
-      default:
-        http.end();
-        return false;
-      }
-      break;
-    default:
-      http.end();
-      return false;
-    }
     break;
   case HTTP_CODE_CREATED: // Station created
     break;
@@ -189,52 +208,144 @@ bool setup_station()
     return false;
   }
 
+  am2320_sensor_id = http.header("Location").toInt();
+
   response = http.getString(); //Get the response payload
-  deserializeJson(station_json_response, response);
+  http.end();
+  deserializeJson(am2320_json_response, response);
   Serial.printf("Station response: %s.\n", response.c_str());
   // Get station, sensors and magnitudes ids
-  station_id = station_json_response["id"];
-  JsonObject sensor1_out = station_json_response["sensors"][0];
-  am2320_sensor_id = sensor1_out["id"];
-  JsonObject sensor1_out_mag1 = sensor1_out["magnitudes"][0];
-  am2320_temp_id = sensor1_out_mag1["id"];
-  JsonObject sensor1_out_mag2 = sensor1_out["magnitudes"][1];
-  am2320_hum_id = sensor1_out_mag2["id"];
-  Serial.printf("station_id: %d, am2320_sensor_id: %d, am2320_temp_id: %d, am2320_hum_id: %d.\n",
-                station_id, am2320_sensor_id, am2320_temp_id, am2320_hum_id);
+  JsonObject am2320_out_mag1 = am2320_json_response["magnitudes"][0];
+  am2320_temp_id = am2320_out_mag1["id"];
+  JsonObject am2320_out_mag2 = am2320_json_response["magnitudes"][1];
+  am2320_hum_id = am2320_out_mag2["id"];
+  Serial.printf("am2320_sensor_id: %d, am2320_temp_id: %d, am2320_hum_id: %d.\n",
+                am2320_sensor_id, am2320_temp_id, am2320_hum_id);
 
-  http.end();
+  am2320.begin();
+  delay(500);
+
   return true;
+}
+
+bool delete_extra_sensors()
+{
+  if (WiFi.status() != WL_CONNECTED)
+  {
+    connect_to_wifi();
+    return false;
+  }
+
+  const int num_magnitudes = 2;
+
+  // Prepare JSON document
+  const size_t response_capacity = JSON_OBJECT_SIZE(3) + num_magnitudes * JSON_ARRAY_SIZE(2) + num_magnitudes * JSON_OBJECT_SIZE(4);
+  DynamicJsonDocument sensors_json_response(response_capacity + 200);
+
+  // post data, if the response is 201 then it was created
+  // If it was 200 then it was already there
+  int get_httpCode;
+
+  http.begin(client, server, port, sensors_endpoint);
+  http.addHeader("Content-Type", "application/json");
+  const char *headerNames[] = {"Location"};
+  http.collectHeaders(headerNames, sizeof(headerNames) / sizeof(headerNames[0]));
+
+  get_httpCode = http.GET(); //Send the request
+  Serial.printf("GET HTTP code: %d.\n", get_httpCode);
+  switch (get_httpCode)
+  {
+  case HTTP_CODE_OK: // Station already existed
+    break;
+  default:
+    http.end();
+    return false;
+  }
+
+  response = http.getString(); //Get the response payload
+  http.end();
+  deserializeJson(sensors_json_response, response);
+  Serial.printf("Station response: %s.\n", response.c_str());
+
+  JsonArray sensors = sensors_json_response.as<JsonArray>();
+  bool to_be_deleted = true;
+  for (JsonObject sensor : sensors)
+  {
+    const int sensor_id = sensor["id"];
+    // if sensor[id] is not one of the sensors we setup, delete it
+    for (int good_sensor_id : sensor_ids)
+    {
+      if (sensor_id == good_sensor_id)
+      {
+        to_be_deleted = false;
+      }
+    }
+    if (to_be_deleted)
+    {
+      // delete sensor_id
+    }
+  }
 }
 
 void setup_sensors()
 {
-  am2320.begin();
-  delay(500);
+  // setup AM2320 sensor
+  setup_am2320_sensor();
+
+  // Collect all sensor_ids
+  sensor_ids[0] = am2320_sensor_id;
+
+  // Delete all other sensors in this station
+  delete_extra_sensors();
 }
 
 ////// Measurement functions
-
 void measure_am2320_sensor()
 {
+  Serial.println("Measuring AM2320...");
+  int conversion_ret_val;
+  time_t now = UTC.now();
   // sensor
   humidity = am2320.readHumidity();
+  temperature = am2320.readTemperature();
+
   if (isnan(humidity))
   {
-    Serial.println("Error reading humidity.");
+    Serial.println("  Error reading humidity.");
   }
-  temperature = am2320.readTemperature();
+  else
+  {
+    SensorData humidity_data = {now, am2320_hum_id};
+    conversion_ret_val = snprintf(humidity_data.value, sizeof(humidity_data.value), "%.3f", humidity);
+    if (conversion_ret_val > 0)
+    {
+      Serial.printf("  Humidity: %.2f %%.\n", humidity);
+      sensor_buffer.push(humidity_data);
+    }
+    else
+    {
+      Serial.printf("  Problem converting humidity (%.2f %%) to char[].\n", humidity);
+    }
+  }
+
   if (isnan(temperature))
   {
-    Serial.println("Error reading temperature.");
+    Serial.println("  Error reading temperature.");
   }
-  if (isnan(temperature) && isnan(humidity))
+  else
   {
-    // All datapoints are invalid
-    return;
+    SensorData temperature_data = {now, am2320_hum_id};
+    conversion_ret_val = snprintf(temperature_data.value, sizeof(temperature_data.value), "%.3f", temperature);
+    if (conversion_ret_val > 0)
+    {
+      Serial.printf("  Temperature: %.2f C.\n", temperature);
+      sensor_buffer.push(temperature_data);
+    }
+    else
+    {
+      Serial.printf("  Problem converting temperature (%.2f C) to char[].\n", temperature);
+    }
   }
-  sensor_am2320_buffer.push(SensorAM2320Data{UTC.now(), temperature, humidity});
-  Serial.printf("Sensor values: %.2f C, %.2f %%.\n", temperature, humidity);
 }
 
 void measure_sensors()
@@ -262,54 +373,51 @@ bool post_measurement(String &data, String endpoint)
   case HTTP_CODE_CREATED:
     return true;
   default:
-    Serial.println("post_measurement HTTP Error code: " + http.errorToString(httpCode));
-
+    Serial.println("  post_measurement HTTP Error code: " + http.errorToString(httpCode));
     return false;
-  }
-}
-
-void send_am2320_data()
-{
-  if (sensor_am2320_buffer.isEmpty())
-  {
-    return;
-  }
-
-  // Attempt to send data
-  sensor_data = sensor_am2320_buffer.last();
-
-  // Prepare JSON document
-  const size_t capacity = JSON_ARRAY_SIZE(2) + 2 * JSON_OBJECT_SIZE(4);
-  DynamicJsonDocument list_measurement(capacity + 200);
-
-  JsonObject data_0 = list_measurement.createNestedObject();
-  data_0["sensor_id"] = am2320_sensor_id;
-  data_0["magnitude_id"] = am2320_temp_id;
-  data_0["timestamp"] = sensor_data.epoch;
-  data_0["value"] = isnan(sensor_data.temperature) ? (char *)0 : String(sensor_data.temperature);
-
-  JsonObject data_1 = list_measurement.createNestedObject();
-  data_1["sensor_id"] = am2320_sensor_id;
-  data_1["magnitude_id"] = am2320_hum_id;
-  data_1["timestamp"] = sensor_data.epoch;
-  data_1["value"] = isnan(sensor_data.humidity) ? (char *)0 : String(sensor_data.humidity);
-
-  // Serialize JSON document
-  String post_data;
-  serializeJson(list_measurement, post_data);
-
-  bool success = post_measurement(post_data, station_endpoint + "/measurements");
-
-  if (success)
-  {
-    Serial.println("Data sent successfully.");
-    sensor_am2320_buffer.pop();
   }
 }
 
 void send_data()
 {
-  send_am2320_data();
+  if (sensor_buffer.isEmpty())
+  {
+    return;
+  }
+  using index_t = decltype(sensor_buffer)::index_t;
+
+  const index_t num_measurements = sensor_buffer.size();
+  Serial.printf("Sending %d measurements...\n", num_measurements);
+
+  // Prepare JSON document
+  const size_t capacity = JSON_ARRAY_SIZE(num_measurements) + num_measurements * JSON_OBJECT_SIZE(4);
+  DynamicJsonDocument list_measurement(capacity + 200 * num_measurements);
+
+  for (index_t i = 0; i < num_measurements; i++)
+  {
+    sensor_data = sensor_buffer[i];
+    JsonObject data_0 = list_measurement.createNestedObject();
+    data_0["sensor_id"] = am2320_sensor_id;
+    data_0["magnitude_id"] = sensor_data.magnitude_id;
+    data_0["timestamp"] = sensor_data.epoch;
+    data_0["value"] = sensor_data.value;
+  }
+
+  // Serialize JSON document
+  String post_data;
+  serializeJson(list_measurement, post_data);
+
+  const bool success = post_measurement(post_data, station_endpoint + "/measurements");
+
+  if (success)
+  {
+    Serial.println("  Data sent successfully.");
+    sensor_buffer.clear();
+  }
+  else
+  {
+    Serial.println("  Data was not sent.");
+  }
 }
 
 void setup()
@@ -350,17 +458,4 @@ void loop()
   // Update timer
   measurement_timer.update();
   send_timer.update();
-
-  // send_data();
-
-  // if ((millis() % 5000) == 0) {
-  //   Serial.println("Begin of buffer.");
-  //   while (!sensor_buffer.isEmpty()) {
-  //     SensorData data;
-  //     data = sensor_buffer.pop();
-  //     Serial.printf("[%s], T = %.2f C, H = %.1f %%.\n",
-  //       Amsterdam.dateTime(data.epoch).c_str(), data.temperature, data.humidity);
-  //   }
-  //   Serial.println("End of buffer.");
-  // }
 }
