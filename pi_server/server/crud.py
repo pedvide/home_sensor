@@ -125,6 +125,12 @@ def change_station(
     return db_station
 
 
+def get_station_sensors(
+    db: Session, station_id: int, offset: int = 0, limit: int = 10
+) -> List[models.Sensor]:
+    return db.query(models.Station).get(station_id).sensors[offset:limit]
+
+
 def get_station_measurements(
     db: Session, station_id: int, order: str = "timestamp", offset: int = 0, limit: int = 10
 ) -> List[models.Measurement]:

@@ -66,6 +66,16 @@ def change_station(
     crud.change_station(db, db_station, new_station)
 
 
+@router.get("/stations/{station_id}/sensors", response_model=List[schemas.Sensor])
+def station_sensors(
+    station_id: int, query_params: ListQueryParameters = Depends(), db: Session = Depends(get_db)
+):
+    if not crud.get_station(db, station_id):
+        raise HTTPException(404, "Station not found")
+    db_sensors = crud.get_station_sensors(db, station_id, **dataclasses.asdict(query_params))
+    return db_sensors
+
+
 @router.get("/stations/{station_id}/measurements", response_model=List[schemas.Measurement])
 def station_measurements(
     station_id: int, query_params: ListQueryParameters = Depends(), db: Session = Depends(get_db)
