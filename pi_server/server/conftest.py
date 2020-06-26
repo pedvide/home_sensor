@@ -63,47 +63,49 @@ def client():
 
 
 @pytest.fixture
-def station_zero():
+def sensor_one():
     mag1 = dict(name="temp", unit="C", precision=0.1)
     mag2 = dict(name="hum", unit="%", precision=0.5)
-    sensor0 = dict(name="am2320", magnitudes=[mag1, mag2])
-    station0 = dict(token="asf3r23g2v", location="living room", sensors=[sensor0])
+    sensor1 = dict(name="am2320", magnitudes=[mag1, mag2])
+    sensor1_out = dict(id=1, name="am2320", magnitudes=[dict(id=1, **mag1), dict(id=2, **mag2)])
+    return sensor1, sensor1_out
 
-    sensor0_out = dict(id=1, name="am2320", magnitudes=[dict(id=1, **mag1), dict(id=2, **mag2)])
-    station0_out = dict(id=1, token="asf3r23g2v", location="living room", sensors=[sensor0_out],)
-    return station0, station0_out
+
+@pytest.fixture
+def sensor_two():
+    mag3 = dict(name="temp", unit="C", precision=0.05)
+    sensor2 = dict(name="high_res_temp", magnitudes=[mag3])
+    sensor2_out = dict(id=2, name="high_res_temp", magnitudes=[dict(id=3, **mag3)])
+    return sensor2, sensor2_out
 
 
 @pytest.fixture
 def station_one():
-    mag1 = dict(name="temp", unit="C", precision=0.1)
-    mag2 = dict(name="hum", unit="%", precision=0.5)
-    mag3 = dict(name="temp", unit="C", precision=0.05)
-    sensor0 = dict(name="am2320", magnitudes=[mag1, mag2])
-    sensor1 = dict(name="high_res_temp", magnitudes=[mag3])
-    station1 = dict(token="sfsdgsds", location="bedroom", sensors=[sensor0, sensor1])
-
-    sensor0_out = dict(id=1, name="am2320", magnitudes=[dict(id=1, **mag1), dict(id=2, **mag2)])
-    sensor1_out = dict(id=2, name="high_res_temp", magnitudes=[dict(id=3, **mag3)])
-    station1_out = dict(
-        id=2, token="sfsdgsds", location="bedroom", sensors=[sensor0_out, sensor1_out],
-    )
+    station1 = dict(token="asf3r23g2v", location="living room")
+    station1_out = dict(id=1, token="asf3r23g2v", location="living room", sensors=[])
     return station1, station1_out
 
 
 @pytest.fixture
-def measurement_one(station_zero):
-    station_in, station_out = station_zero
-    sensor_out = station_out["sensors"][0]
+def station_two():
+    station2 = dict(token="sfsdgsds", location="bedroom")
+    station2_out = dict(id=2, token="sfsdgsds", location="bedroom", sensors=[])
+    return station2, station2_out
+
+
+@pytest.fixture
+def measurement_one(station_one, sensor_one):
+    station_in, station_out = station_one
+    sensor_in, sensor_out = sensor_one
     magnitude_out = sensor_out["magnitudes"][0]
 
-    m0_in = dict(
+    m1_in = dict(
         timestamp=1589231767,
         magnitude_id=magnitude_out["id"],
         sensor_id=sensor_out["id"],
         value="25.3",
     )
-    m0_out = dict(
+    m1_out = dict(
         id=1,
         station=station_out,
         sensor=sensor_out,
@@ -112,22 +114,22 @@ def measurement_one(station_zero):
         value="25.3",
     )
 
-    return m0_in, m0_out
+    return m1_in, m1_out
 
 
 @pytest.fixture
-def measurement_two(station_zero):
-    station_in, station_out = station_zero
-    sensor_out = station_out["sensors"][0]
+def measurement_two(station_one, sensor_one):
+    station_in, station_out = station_one
+    sensor_in, sensor_out = sensor_one
     magnitude_out = sensor_out["magnitudes"][0]
 
-    m1_in = dict(
+    m2_in = dict(
         timestamp=1589231900,
         magnitude_id=magnitude_out["id"],
         sensor_id=sensor_out["id"],
         value="20.3",
     )
-    m1_out = dict(
+    m2_out = dict(
         id=2,
         station=station_out,
         sensor=sensor_out,
@@ -136,4 +138,4 @@ def measurement_two(station_zero):
         value="20.3",
     )
 
-    return m1_in, m1_out
+    return m2_in, m2_out
