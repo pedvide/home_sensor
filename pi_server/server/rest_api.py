@@ -95,19 +95,22 @@ def station_sensor(station_id: int, sensor_id: int, db: Session = Depends(get_db
     db_station = crud.get_station(db, station_id)
     if not db_station:
         raise HTTPException(404, "Station not found")
-    if not crud.get_sensor(db, sensor_id):
+    db_sensor = crud.get_sensor(db, sensor_id)
+    if not db_sensor:
         raise HTTPException(404, "Sensor not found")
-    db_sensor = crud.get_station_sensor(db, db_station, sensor_id)
+    db_sensor = crud.get_station_sensor(db, db_station, db_sensor)
     return db_sensor
 
 
-@router.delete("/stations/{station_id}/sensors/{sensor_id}", response_model=schemas.Sensor)
+@router.delete("/stations/{station_id}/sensors/{sensor_id}", status_code=204)
 def delete_station_sensor(station_id: int, sensor_id: int, db: Session = Depends(get_db)):
-    if not crud.get_station(db, station_id):
+    db_station = crud.get_station(db, station_id)
+    if not db_station:
         raise HTTPException(404, "Station not found")
-    if not crud.get_sensor(db, sensor_id):
+    db_sensor = crud.get_sensor(db, sensor_id)
+    if not db_sensor:
         raise HTTPException(404, "Sensor not found")
-    crud.delete_station_sensor(db, station_id, sensor_id)
+    crud.delete_station_sensor(db, db_station, db_sensor)
 
 
 ### Station measurements

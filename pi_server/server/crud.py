@@ -79,8 +79,10 @@ def get_station_sensors(
     return db_station.sensors[offset:limit]
 
 
-def get_station_sensor(db: Session, db_station: models.Station, sensor_id: int) -> models.Sensor:
-    return [sensor for sensor in db_station.sensors if sensor.id == sensor_id][0]
+def get_station_sensor(
+    db: Session, db_station: models.Station, db_sensor: models.Sensor
+) -> models.Sensor:
+    return [sensor for sensor in db_station.sensors if sensor.id == db_sensor.id][0]
 
 
 def create_station_sensor(
@@ -94,9 +96,18 @@ def create_station_sensor(
     return db_sensor
 
 
-def delete_station_sensor(db: Session, db_station: models.Station, sensor_id: int) -> None:
-    db_sensor_station = get_station_sensor(db, db_station, sensor_id)
-    db_sensor_station.valid_until = datetime.now()
+def delete_station_sensor(
+    db: Session, db_station: models.Station, db_sensor: models.Sensor
+) -> None:
+    db_station_sensor = (
+        db.query(models.StationSensor)
+        .filter(
+            models.StationSensor.station == db_station, models.StationSensor.sensor == db_sensor
+        )
+        .filter(models.StationSensor.valid_until.is_(None))
+        .one()
+    )
+    db_station_sensor.valid_until = datetime.now()
     db.commit()
 
 

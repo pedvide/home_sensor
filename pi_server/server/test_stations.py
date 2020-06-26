@@ -134,3 +134,18 @@ def test_create_same_station_sensor_twice(client, db_session, station_one, senso
     response = client.get("/api/stations/1/sensors")
     assert response.status_code == 200
     assert response.json() == [sensor0_out]
+
+
+def test_delete_station_sensors(client, db_session, station_one, sensor_one):
+    station_in, station_out = station_one
+    sensor_in, sensor_out = sensor_one
+
+    client.post("/api/stations", json=station_in)
+    client.post("/api/stations/1/sensors", json=sensor_in)
+
+    response = client.delete("/api/stations/1/sensors/1")
+    assert response.status_code == 204
+
+    response = client.get("/api/stations/1/sensors")
+    assert response.status_code == 200
+    assert response.json() == []
