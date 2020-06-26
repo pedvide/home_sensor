@@ -157,6 +157,26 @@ def test_one_station(client, db_session, station_zero):
     assert response.json() == [station_out]
 
 
+def test_one_station_no_sensors(client, db_session, station_zero):
+    station_in, station_out = station_zero
+    station_in["sensors"] = []
+    station_out["sensors"] = []
+
+    response = client.post("/api/stations", json=station_in)
+    assert response.status_code == 201
+    assert "location" in response.headers
+    assert response.headers["location"] == "1"
+    assert response.json() == station_out
+
+    response = client.get("/api/stations/1")
+    assert response.status_code == 200
+    assert response.json() == station_out
+
+    response = client.get("/api/stations")
+    assert response.status_code == 200
+    assert response.json() == [station_out]
+
+
 def test_get_wrong_station(client, db_session):
     response = client.get("/api/stations/0")
     assert response.status_code == 404
