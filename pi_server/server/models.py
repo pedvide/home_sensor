@@ -5,8 +5,6 @@ from sqlalchemy.ext.associationproxy import association_proxy
 
 from .database import Base
 
-from typing import List
-
 
 class Magnitude(Base):
     __tablename__ = "magnitudes"
@@ -95,9 +93,6 @@ class Station(Base):
     def add_sensor(self, sensor: Sensor):
         self._all_sensors.append(sensor)
 
-    def add_sensors(self, sensors: List[Sensor]):
-        self._all_sensors.extend(sensors)
-
     @property
     def sensors(self):
         """Return valid sensors"""
@@ -106,10 +101,6 @@ class Station(Base):
             for station_sensor in self.stations_sensors_rel
             if station_sensor.valid_until is None
         ]
-
-    @sensors.setter
-    def sensors(self, value):
-        self.all_sensors = value
 
     measurements = relationship("Measurement", back_populates="station", lazy="dynamic")
 
