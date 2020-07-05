@@ -77,17 +77,35 @@ def test_create_same_station_twice(client, db_session, station_one):
     assert response.json() == [station1_out]
 
 
+def test_create_station_with_sensors(client, db_session, station_one, sensor_one):
+    station_in, station_out = station_one
+    sensor_in, sensor_out = sensor_one
+    station_in["sensors"] = [sensor_in]
+    station_out["sensors"] = [sensor_out]
+
+    response = client.post("/api/stations", json=station_in)
+    assert response.status_code == 201
+    assert "location" in response.headers
+    assert response.headers["location"] == "1"
+    assert response.json() == station_out
+
+    response = client.get("/api/stations/1/sensors")
+    assert response.status_code == 200
+    assert response.json() == [sensor_out]
+
+    response = client.get("/api/stations/1/sensors/1")
+    assert response.status_code == 200
+    assert response.json() == sensor_out
+
+
 def test_create_get_station_sensors(client, db_session, station_one, sensor_one):
     station_in, station_out = station_one
     sensor_in, sensor_out = sensor_one
 
     client.post("/api/stations", json=station_in)
 
-    response = client.post("/api/stations/1/sensors", json=sensor_in)
-    assert response.status_code == 201
-    assert "location" in response.headers
-    assert response.headers["location"] == "1"
-    assert response.json() == sensor_out
+    response = client.put("/api/stations/1/sensors", json=[sensor_in])
+    assert response.status_code == 204
 
     response = client.get("/api/stations/1/sensors")
     assert response.status_code == 200
@@ -105,10 +123,8 @@ def test_create_get_two_station_sensors(client, db_session, station_one, sensor_
 
     client.post("/api/stations", json=station_in)
 
-    client.post("/api/stations/1/sensors", json=sensor1_in)
-    response = client.post("/api/stations/1/sensors", json=sensor2_in)
-    assert "location" in response.headers
-    assert response.headers["location"] == "2"
+    response = client.put("/api/stations/1/sensors", json=[sensor1_in, sensor2_in])
+    assert response.status_code == 204
 
     response = client.get("/api/stations/1/sensors")
     assert response.status_code == 200
@@ -128,28 +144,12 @@ def test_create_same_station_sensor_twice(client, db_session, station_one, senso
     sensor0_in, sensor0_out = sensor_one
 
     client.post("/api/stations", json=station_in)
-    client.post("/api/stations/1/sensors", json=sensor0_in)
+    client.put("/api/stations/1/sensors", json=[sensor0_in])
 
-    # repeat POST should return first resource + 200
-    response = client.post("/api/stations/1/sensors", json=sensor0_in)
-    assert response.status_code == 200
-    assert response.json() == sensor0_out
-
-    response = client.get("/api/stations/1/sensors")
-    assert response.status_code == 200
-    assert response.json() == [sensor0_out]
-
-
-def test_delete_station_sensors(client, db_session, station_one, sensor_one):
-    station_in, station_out = station_one
-    sensor_in, sensor_out = sensor_one
-
-    client.post("/api/stations", json=station_in)
-    client.post("/api/stations/1/sensors", json=sensor_in)
-
-    response = client.delete("/api/stations/1/sensors/1")
+    # PUT is idempotent, so it shouldn't duplicate
+    response = client.put("/api/stations/1/sensors", json=[sensor0_in])
     assert response.status_code == 204
 
     response = client.get("/api/stations/1/sensors")
     assert response.status_code == 200
-    assert response.json() == []
+    assert response.json() == [sensor0_out]

@@ -67,27 +67,31 @@ def station_sensors(
     return db_sensors
 
 
-@router.post("/stations/{station_id}/sensors", status_code=201, response_model=schemas.Sensor)
-def create_station_sensor(
-    station_id: int, sensor: schemas.SensorCreate, response: Response, db: Session = Depends(get_db)
+@router.put("/stations/{station_id}/sensors", status_code=204)
+def set_station_sensors(
+    station_id: int,
+    sensors: List[schemas.SensorCreate],
+    response: Response,
+    db: Session = Depends(get_db),
 ):
-    """
-    Return 201 + sensor if it didn't exist.
-    Return 200 + sensor if it already existed."""
+    """Sets the station's sensors to sensors"""
 
     db_station = crud.get_station(db, station_id)
     if not db_station:
         raise HTTPException(404, "Station not found")
 
-    db_sensor = crud.get_sensor_by_name(db, name=sensor.name)
+    old_sensor_names = [db_sensor.name for db_sensor in db_station.sensors]
+    new_sensor_names = [sensor.name for sensor in sensors]
+    sensor_names_add = set(new_sensor_names).difference(set(old_sensor_names))
+    sensors_add = [sensor for sensor in sensors if sensor.name in sensor_names_add]
+    db_sensor_names_delete = set(old_sensor_names).difference(set(new_sensor_names))
+    db_sensors_delete = [sensor for sensor in sensors if sensor.name in db_sensor_names_delete]
 
-    if db_sensor:
-        response.status_code = 200
-    else:
+    for sensor in sensors_add:
         db_sensor = crud.create_station_sensor(db, db_station, sensor)
 
-    response.headers["Location"] = str(db_sensor.id)
-    return db_sensor
+    for db_sensor in db_sensors_delete:
+        crud.delete_station_sensor(db, db_station, db_sensor)
 
 
 @router.get("/stations/{station_id}/sensors/{sensor_id}", response_model=schemas.Sensor)
@@ -100,17 +104,6 @@ def station_sensor(station_id: int, sensor_id: int, db: Session = Depends(get_db
         raise HTTPException(404, "Sensor not found")
     db_sensor = crud.get_station_sensor(db, db_station, db_sensor)
     return db_sensor
-
-
-@router.delete("/stations/{station_id}/sensors/{sensor_id}", status_code=204)
-def delete_station_sensor(station_id: int, sensor_id: int, db: Session = Depends(get_db)):
-    db_station = crud.get_station(db, station_id)
-    if not db_station:
-        raise HTTPException(404, "Station not found")
-    db_sensor = crud.get_sensor(db, sensor_id)
-    if not db_sensor:
-        raise HTTPException(404, "Sensor not found")
-    crud.delete_station_sensor(db, db_station, db_sensor)
 
 
 ### Station measurements

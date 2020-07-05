@@ -41,7 +41,7 @@ class StationBase(BaseModel):
 
 
 class StationCreate(StationBase):
-    pass
+    sensors: List[SensorCreate] = []
 
 
 class Station(StationBase):

@@ -70,6 +70,9 @@ def create_station(db: Session, station: schemas.StationCreate) -> models.Statio
     db.commit()
     db.refresh(db_station)
 
+    for sensor in station.sensors:
+        create_station_sensor(db, db_station, sensor)
+
     return db_station
 
 
