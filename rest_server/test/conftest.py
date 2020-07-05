@@ -1,5 +1,5 @@
-from server.app import app as app
-from server.database import get_db, create_engine, sessionmaker, Base
+from rest_server.app import app as app
+from rest_server.database import get_db, create_engine, sessionmaker, Base
 
 from fastapi.testclient import TestClient
 
