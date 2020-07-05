@@ -1,4 +1,4 @@
-# client
+# web_client
 
 ## Project setup
 
@@ -40,7 +40,7 @@ sudo vim /etc/nginx/sites-enabled/default
 server {
         listen 80 default_server;
         listen [::]:80 default_server;
-        root /home/pedvide/home_sensor/client/dist;
+        root /home/pedvide/home_sensor/web_client/dist;
         index index.html index.htm;
         location / {
                 # First attempt to serve request as file, then
@@ -50,7 +50,7 @@ server {
 }
 ```
 
-Build with `npm run build` and use rsync to copy dist folder to `/home/pedvide/home_sensor/client/dist`.
+Build with `npm run build` and use rsync to copy dist folder to `/home/pedvide/home_sensor/web_client/dist`.
 
 Start nginx service:
 
@@ -59,3 +59,12 @@ sudo systemctl start nginx.service
 ```
 
 Go to `<hostname>` to see web app.
+
+## Logs
+
+Nginx web_client:
+
+```
+$ sudo tail /var/log/nginx/access.log
+$ sudo tail /var/log/nginx/error.log
+```

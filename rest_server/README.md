@@ -49,7 +49,7 @@ ExecStart=/home/pedvide/home_sensor/env/bin/gunicorn \
           --bind unix:/run/home_sensor_backend.sock \
           -k uvicorn.workers.UvicornWorker \
           --name home_sensor_backend \
-          server.app:app
+          rest_server.app:app
 
 [Install]
 WantedBy=multi-user.target
@@ -77,7 +77,7 @@ $ cat /etc/nginx/sites-enabled/default
 server {
         listen 80 default_server;
         listen [::]:80 default_server;
-        root /home/pedvide/home_sensor/client/dist;
+        root /home/pedvide/home_sensor/web_client/dist;
         index index.html index.htm;
 
         # backend rest server
@@ -113,7 +113,7 @@ $ sudo systemctl enable nginx.service
 
 ## Logs
 
-Nginx (both web frontend and backend server):
+Nginx (both web_client and backend rest_server):
 
 ```
 $ sudo tail /var/log/nginx/access.log
