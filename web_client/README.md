@@ -50,7 +50,7 @@ server {
 }
 ```
 
-Use rsync to copy dist folder to `/home/pedvide/home_sensor/client/dist`.
+Build with `npm run build` and use rsync to copy dist folder to `/home/pedvide/home_sensor/client/dist`.
 
 Start nginx service:
 

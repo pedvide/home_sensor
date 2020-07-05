@@ -1,16 +1,12 @@
-# home_sensor
+# rest_Server
 
 ## Deployment
 
 Install packages in requirements.txt
 
-### Deploy server
+### Deploy rest_server
 
 Copy server folder with rsync.
-
-### Deploy web client
-
-Build with `npm run build` and use rsync to copy `dist` folder to `/home/pedvide/home_sensor/client/dist`.
 
 ### Deploy backend with systemd module
 
@@ -74,7 +70,7 @@ $ curl --unix-socket /run/home_sensor_backend.sock localhost/api/docs
 
 ### Configure reverse proxy
 
-nginx configuration:
+nginx configuration (includes web_client config):
 
 ```
 $ cat /etc/nginx/sites-enabled/default
