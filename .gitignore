@@ -8,4 +8,4 @@ config.h
 .pio
 .coverage
 htmlcov
-pi_server/sql_app.db
+sql_app.db
