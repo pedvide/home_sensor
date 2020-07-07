@@ -41,8 +41,8 @@ After=network.target
 [Service]
 User=pedvide
 Group=www-data
-WorkingDirectory=/home/pedvide/home_sensor
-ExecStart=/home/pedvide/home_sensor/env/bin/gunicorn \
+WorkingDirectory=/home/pedvide/home_sensor/rest_server
+ExecStart=/home/pedvide/home_sensor/rest_server/env/bin/gunicorn \
           --access-logfile /var/log/home_sensor_backend/access.log \
           --error-logfile /var/log/home_sensor_backend/error.log \
           --workers 1 \
