@@ -10,15 +10,15 @@
 
 #include "config.h"
 
-String mac_sha;
-
 //// WiFi
 const char *ssid = STASSID;
 const char *password = STAPSK;
 
+//// Station
+String mac_sha;
 const char *location = "living room";
 
-//// Main server
+//// rest server
 const char *server = SERVER_HOSTNAME;
 const char *stations_endpoint = "/api/stations";
 String station_endpoint, sensors_endpoint;
@@ -36,11 +36,13 @@ Ticker measurement_timer(measure_sensors, sensor_period_s * 1e3, 0, MILLIS);
 typedef struct
 {
   time_t epoch;
+  uint8_t sensor_id;
   uint8_t magnitude_id;
   char value[50];
 } SensorData;
 SensorData sensor_data;
 CircularBuffer<SensorData, 255> sensor_buffer; // Keep some raw data
+uint8 num_measurement_errors = 0;
 
 // AM2320 Sensor
 uint8_t am2320_sensor_id, am2320_temp_id, am2320_hum_id;
@@ -110,6 +112,8 @@ bool setup_station()
     return false;
   }
 
+  Serial.println("setup_station");
+
   // Prepare JSON document
   const size_t capacity = JSON_OBJECT_SIZE(2);
   DynamicJsonDocument station_json(capacity + 50);
@@ -131,7 +135,7 @@ bool setup_station()
   http.collectHeaders(headerNames, sizeof(headerNames) / sizeof(headerNames[0]));
 
   post_httpCode = http.POST(station_data); //Send the request
-  Serial.printf("POST HTTP code: %d.\n", post_httpCode);
+  Serial.printf("  POST HTTP code: %d.\n", post_httpCode);
   switch (post_httpCode)
   {
   case HTTP_CODE_OK: // Station already existed
@@ -147,28 +151,14 @@ bool setup_station()
   station_endpoint = String(stations_endpoint) + "/" + station_id;
   sensors_endpoint = String(stations_endpoint) + "/" + station_id + "/sensors";
 
-  Serial.printf("station_id: %d.\n", station_id);
+  Serial.printf("  station_id: %d.\n", station_id);
 
   http.end();
   return true;
 }
 
-bool setup_am2320_sensor()
+bool setup_am2320_sensor_json(JsonObject &am2320_json)
 {
-  if (WiFi.status() != WL_CONNECTED)
-  {
-    connect_to_wifi();
-    return false;
-  }
-
-  const int num_magnitudes = 2;
-
-  // Prepare JSON document
-  const size_t capacity = JSON_OBJECT_SIZE(2) + JSON_ARRAY_SIZE(num_magnitudes) + num_magnitudes * JSON_OBJECT_SIZE(3);
-  DynamicJsonDocument am2320_json(capacity + 200);
-  const size_t response_capacity = JSON_OBJECT_SIZE(3) + num_magnitudes * JSON_ARRAY_SIZE(2) + num_magnitudes * JSON_OBJECT_SIZE(4);
-  DynamicJsonDocument am2320_json_response(response_capacity + 200);
-
   am2320_json["name"] = sensor_am2320_name;
   JsonArray sensor_1_in_magnitudes = am2320_json.createNestedArray("magnitudes");
 
@@ -182,53 +172,40 @@ bool setup_am2320_sensor()
   mag2_in["unit"] = "%";
   mag2_in["precision"] = 0.1;
 
-  // Serialize JSON document
-  String am2320_data;
-  serializeJson(am2320_json, am2320_data);
+  return true;
+}
 
-  // post data, if the response is 201 then it was created
-  // If it was 200 then it was already there
-  int post_httpCode;
-
-  http.begin(client, server, port, sensors_endpoint);
-  http.addHeader("Content-Type", "application/json");
-  const char *headerNames[] = {"Location"};
-  http.collectHeaders(headerNames, sizeof(headerNames) / sizeof(headerNames[0]));
-
-  post_httpCode = http.POST(am2320_data); //Send the request
-  Serial.printf("POST HTTP code: %d.\n", post_httpCode);
-  switch (post_httpCode)
+bool parse_am2320_sensor_json(JsonObject &am2320_json_response)
+{
+  am2320_sensor_id = am2320_json_response["id"];
+  JsonArray magnitudes_json = am2320_json_response["magnitudes"].as<JsonArray>();
+  for (JsonObject mag_json : magnitudes_json)
   {
-  case HTTP_CODE_OK: // Station already existed
-    break;
-  case HTTP_CODE_CREATED: // Station created
-    break;
-  default:
-    http.end();
-    return false;
+    const char *name = mag_json["name"];
+    if (strcmp(name, "temperature") == 0)
+    {
+      am2320_temp_id = mag_json["id"];
+    }
+    else if (strcmp(name, "humidity") == 0)
+    {
+      am2320_hum_id = mag_json["id"];
+    }
   }
-
-  am2320_sensor_id = http.header("Location").toInt();
-
-  response = http.getString(); //Get the response payload
-  http.end();
-  deserializeJson(am2320_json_response, response);
-  Serial.printf("Station response: %s.\n", response.c_str());
-  // Get station, sensors and magnitudes ids
-  JsonObject am2320_out_mag1 = am2320_json_response["magnitudes"][0];
-  am2320_temp_id = am2320_out_mag1["id"];
-  JsonObject am2320_out_mag2 = am2320_json_response["magnitudes"][1];
-  am2320_hum_id = am2320_out_mag2["id"];
-  Serial.printf("am2320_sensor_id: %d, am2320_temp_id: %d, am2320_hum_id: %d.\n",
+  Serial.printf("  am2320_sensor_id: %d, am2320_temp_id: %d, am2320_hum_id: %d.\n",
                 am2320_sensor_id, am2320_temp_id, am2320_hum_id);
 
+  return true;
+}
+
+bool setup_am2320_sensor()
+{
   am2320.begin();
   delay(500);
 
   return true;
 }
 
-bool delete_extra_sensors()
+bool setup_sensors()
 {
   if (WiFi.status() != WL_CONNECTED)
   {
@@ -236,26 +213,35 @@ bool delete_extra_sensors()
     return false;
   }
 
-  const int num_magnitudes = 2;
+  Serial.println("setup_sensors");
 
   // Prepare JSON document
-  const size_t response_capacity = JSON_OBJECT_SIZE(3) + num_magnitudes * JSON_ARRAY_SIZE(2) + num_magnitudes * JSON_OBJECT_SIZE(4);
+  const size_t capacity_am2320 = JSON_ARRAY_SIZE(2) + JSON_OBJECT_SIZE(2) + 2 * JSON_OBJECT_SIZE(3);
+  const size_t capacity = JSON_ARRAY_SIZE(1) + capacity_am2320;
+  DynamicJsonDocument sensors_json(capacity + 200);
+  const size_t response_capacity_am2320 = JSON_ARRAY_SIZE(2) + JSON_OBJECT_SIZE(3) + 2 * JSON_OBJECT_SIZE(4);
+  const size_t response_capacity = JSON_ARRAY_SIZE(1) + response_capacity_am2320;
   DynamicJsonDocument sensors_json_response(response_capacity + 200);
 
-  // post data, if the response is 201 then it was created
-  // If it was 200 then it was already there
-  int get_httpCode;
+  JsonObject am2320_json = sensors_json.createNestedObject();
+  setup_am2320_sensor_json(am2320_json);
 
+  // Serialize JSON document
+  String sensors_data;
+  serializeJson(sensors_json, sensors_data);
+
+  // put data, if the response is 204 then it all went well
+  int get_httpCode, put_httpCode;
   http.begin(client, server, port, sensors_endpoint);
-  http.addHeader("Content-Type", "application/json");
-  const char *headerNames[] = {"Location"};
-  http.collectHeaders(headerNames, sizeof(headerNames) / sizeof(headerNames[0]));
-
-  get_httpCode = http.GET(); //Send the request
-  Serial.printf("GET HTTP code: %d.\n", get_httpCode);
-  switch (get_httpCode)
+  put_httpCode = http.PUT(sensors_data);
+  Serial.printf("  PUT HTTP code: %d.\n", put_httpCode);
+  switch (put_httpCode)
   {
-  case HTTP_CODE_OK: // Station already existed
+  case HTTP_CODE_NO_CONTENT: // OK, GET sensors
+    http.end();
+    http.begin(client, server, port, sensors_endpoint);
+    get_httpCode = http.GET();
+    Serial.printf("  GET HTTP code: %d.\n", get_httpCode);
     break;
   default:
     http.end();
@@ -264,39 +250,27 @@ bool delete_extra_sensors()
 
   response = http.getString(); //Get the response payload
   http.end();
-  deserializeJson(sensors_json_response, response);
-  Serial.printf("Station response: %s.\n", response.c_str());
+  // Serial.printf("  rest_server response: %s.\n", response.c_str());
 
-  JsonArray sensors = sensors_json_response.as<JsonArray>();
-  bool to_be_deleted = true;
-  for (JsonObject sensor : sensors)
+  deserializeJson(sensors_json_response, response);
+  JsonArray sensors_json_out = sensors_json_response.as<JsonArray>();
+
+  for (JsonObject sensor_json : sensors_json_out)
   {
-    const int sensor_id = sensor["id"];
-    // if sensor[id] is not one of the sensors we setup, delete it
-    for (int good_sensor_id : sensor_ids)
+    const char *name = sensor_json["name"];
+    if (strcmp(name, sensor_am2320_name) == 0)
     {
-      if (sensor_id == good_sensor_id)
-      {
-        to_be_deleted = false;
-      }
-    }
-    if (to_be_deleted)
-    {
-      // delete sensor_id
+      parse_am2320_sensor_json(sensor_json);
     }
   }
-}
 
-void setup_sensors()
-{
   // setup AM2320 sensor
   setup_am2320_sensor();
 
   // Collect all sensor_ids
   sensor_ids[0] = am2320_sensor_id;
 
-  // Delete all other sensors in this station
-  delete_extra_sensors();
+  return true;
 }
 
 ////// Measurement functions
@@ -312,15 +286,20 @@ void measure_am2320_sensor()
   if (isnan(humidity))
   {
     Serial.println("  Error reading humidity.");
+    num_measurement_errors++;
   }
   else
   {
-    SensorData humidity_data = {now, am2320_hum_id};
+    SensorData humidity_data = {now, am2320_sensor_id, am2320_hum_id};
     conversion_ret_val = snprintf(humidity_data.value, sizeof(humidity_data.value), "%.3f", humidity);
     if (conversion_ret_val > 0)
     {
       Serial.printf("  Humidity: %.2f %%.\n", humidity);
       sensor_buffer.push(humidity_data);
+      if (num_measurement_errors > 0)
+      {
+        num_measurement_errors--;
+      }
     }
     else
     {
@@ -331,15 +310,20 @@ void measure_am2320_sensor()
   if (isnan(temperature))
   {
     Serial.println("  Error reading temperature.");
+    num_measurement_errors++;
   }
   else
   {
-    SensorData temperature_data = {now, am2320_hum_id};
+    SensorData temperature_data = {now, am2320_sensor_id, am2320_temp_id};
     conversion_ret_val = snprintf(temperature_data.value, sizeof(temperature_data.value), "%.3f", temperature);
     if (conversion_ret_val > 0)
     {
       Serial.printf("  Temperature: %.2f C.\n", temperature);
       sensor_buffer.push(temperature_data);
+      if (num_measurement_errors > 0)
+      {
+        num_measurement_errors--;
+      }
     }
     else
     {
@@ -397,7 +381,7 @@ void send_data()
   {
     sensor_data = sensor_buffer[i];
     JsonObject data_0 = list_measurement.createNestedObject();
-    data_0["sensor_id"] = am2320_sensor_id;
+    data_0["sensor_id"] = sensor_data.sensor_id;
     data_0["magnitude_id"] = sensor_data.magnitude_id;
     data_0["timestamp"] = sensor_data.epoch;
     data_0["value"] = sensor_data.value;
@@ -428,8 +412,6 @@ void setup()
 
   connect_to_time();
 
-  setup_sensors();
-
   uint8_t num_tries = 0;
   while (!setup_station())
   {
@@ -445,6 +427,21 @@ void setup()
     }
   }
 
+  num_tries = 0;
+  while (!setup_sensors())
+  {
+    if (num_tries < 100)
+    {
+      delay(1000);
+      num_tries++;
+    }
+    else
+    {
+      Serial.println("Too many retries to setup_sensors: restarting.");
+      ESP.restart();
+    }
+  }
+
   // Timer
   measurement_timer.start();
   send_timer.start();
@@ -454,6 +451,12 @@ void loop()
 {
   // Update time if needed
   events();
+
+  if (num_measurement_errors > 100)
+  {
+    Serial.println("Too many measurement errors: restarting.");
+    ESP.restart();
+  }
 
   // Update timer
   measurement_timer.update();
