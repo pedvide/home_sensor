@@ -65,7 +65,7 @@ class MeasurementCreate(MeasurementBase):
 class Measurement(MeasurementBase):
     id: int
     station_id: int
-    sensor: Sensor
+    sensor_id: int
     magnitude: Magnitude
 
     class Config:
