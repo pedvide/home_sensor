@@ -141,15 +141,47 @@ def test_create_get_two_station_sensors(client, db_session, station_one, sensor_
 
 def test_create_same_station_sensor_twice(client, db_session, station_one, sensor_one):
     station_in, station_out = station_one
-    sensor0_in, sensor0_out = sensor_one
+    sensor1_in, sensor1_out = sensor_one
 
     client.post("/api/stations", json=station_in)
-    client.put("/api/stations/1/sensors", json=[sensor0_in])
+    client.put("/api/stations/1/sensors", json=[sensor1_in])
 
     # PUT is idempotent, so it shouldn't duplicate
-    response = client.put("/api/stations/1/sensors", json=[sensor0_in])
+    response = client.put("/api/stations/1/sensors", json=[sensor1_in])
     assert response.status_code == 204
 
     response = client.get("/api/stations/1/sensors")
     assert response.status_code == 200
-    assert response.json() == [sensor0_out]
+    assert response.json() == [sensor1_out]
+
+
+def test_create_two_stations_same_sensor(client, db_session, station_one, station_two, sensor_one):
+    from rest_server import models
+
+    station1_in, station1_out = station_one
+    station2_in, station2_out = station_two
+    sensor1_in, sensor1_out = sensor_one
+
+    client.post("/api/stations", json=station1_in)
+    client.put("/api/stations/1/sensors", json=[sensor1_in])
+
+    print(db_session.query(models.Station).all())
+    print(db_session.query(models.Sensor).all())
+    print(db_session.query(models.StationSensor).all())
+
+    # create new station with the same sensor
+    client.post("/api/stations", json=station2_in)
+    response = client.put("/api/stations/2/sensors", json=[sensor1_in])
+    assert response.status_code == 204
+
+    print(db_session.query(models.Station).all())
+    print(db_session.query(models.Sensor).all())
+    print(db_session.query(models.StationSensor).all())
+
+    response = client.get("/api/stations/1/sensors")
+    assert response.status_code == 200
+    assert response.json() == [sensor1_out]
+
+    response = client.get("/api/stations/2/sensors")
+    assert response.status_code == 200
+    assert response.json() == [sensor1_out]

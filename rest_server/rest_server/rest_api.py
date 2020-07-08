@@ -88,7 +88,11 @@ def set_station_sensors(
     db_sensors_delete = [sensor for sensor in sensors if sensor.name in db_sensor_names_delete]
 
     for sensor in sensors_add:
-        db_sensor = crud.create_station_sensor(db, db_station, sensor)
+        db_sensor = crud.get_sensor_by_name(db, sensor.name)
+        if db_sensor:
+            crud.add_station_sensor(db, db_station, db_sensor)
+        else:
+            crud.create_station_sensor(db, db_station, sensor)
 
     for db_sensor in db_sensors_delete:
         crud.delete_station_sensor(db, db_station, db_sensor)

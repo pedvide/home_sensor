@@ -88,11 +88,16 @@ def get_station_sensor(
     return [sensor for sensor in db_station.sensors if sensor.id == db_sensor.id][0]
 
 
+def add_station_sensor(db: Session, db_station: models.Station, db_sensor: models.Sensor) -> None:
+    db_station.add_sensor(db_sensor)
+    db.commit()
+
+
 def create_station_sensor(
     db: Session, db_station: models.Station, sensor: schemas.SensorCreate
 ) -> models.Sensor:
     db_sensor = create_sensor(db, sensor)
-    db_station.add_sensor(db_sensor)
+    add_station_sensor(db, db_station, db_sensor)
 
     db.commit()
     db.refresh(db_sensor)
