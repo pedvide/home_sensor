@@ -8,7 +8,7 @@ typedef struct
     char message[75];
 } LogData;
 
-CircularBuffer<LogData, 45> log_buffer;
+CircularBuffer<LogData, 35> log_buffer;
 LogData log_record;
 
 void log_printf(const char *format, ...)
