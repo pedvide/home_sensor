@@ -1,6 +1,9 @@
 
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
+#include "ESPAsyncTCP.h"
+#include "ESPAsyncWebServer.h"
+
 #include <Adafruit_AM2320.h>
 #include <ezTime.h>
 #include <CircularBuffer.h>
@@ -13,6 +16,40 @@
 //// WiFi
 const char *ssid = STASSID;
 const char *password = STAPSK;
+
+//// Server
+AsyncWebServer web_server(80);
+String web_debug_info_header, web_debug_info;
+typedef struct
+{
+  time_t epoch;
+  char message[75];
+} LogData;
+CircularBuffer<LogData, 50> log_buffer;
+LogData log_record;
+void log_printf(const char *format, ...)
+{
+  LogData new_value{UTC.now()};
+
+  va_list arg;
+  va_start(arg, format);
+  vsnprintf(new_value.message, sizeof(new_value.message), format, arg);
+  va_end(arg);
+
+  Serial.print(new_value.message);
+
+  log_buffer.push(new_value);
+}
+void log_println(const char *str)
+{
+  LogData new_value{UTC.now()};
+
+  snprintf(new_value.message, sizeof(new_value.message), "%s", str);
+
+  Serial.println(new_value.message);
+
+  log_buffer.push(new_value);
+}
 
 //// Station
 String mac_sha;
@@ -273,10 +310,41 @@ bool setup_sensors()
   return true;
 }
 
+void setup_server()
+{
+  Serial.println("setup_server");
+  // Web server
+  web_debug_info_header = String("ESP8266 home-sensor " + mac_sha + "\nLocated in the " + location + ".\n");
+  web_server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+    if (!log_buffer.isEmpty())
+    {
+      web_debug_info = "";
+      using index_t = decltype(log_buffer)::index_t;
+      for (index_t i = 0; i < log_buffer.size(); i++)
+      {
+        log_record = log_buffer[i];
+        String message = String(log_record.message);
+        message.trim();
+        web_debug_info += UTC.dateTime(log_record.epoch) + " - " + message + "\n";
+      }
+    }
+    request->send(200, "text/plain", web_debug_info_header + web_debug_info);
+  });
+
+  web_server.onNotFound([](AsyncWebServerRequest *request) {
+    Serial.println("404.");
+    request->send(404, "text/plain", "Not found");
+  });
+
+  // Start server
+  web_server.begin();
+  Serial.println("  done.");
+}
+
 ////// Measurement functions
 void measure_am2320_sensor()
 {
-  Serial.println("Measuring AM2320...");
+  log_println("Measuring AM2320...");
   int conversion_ret_val;
   time_t now = UTC.now();
   // sensor
@@ -294,7 +362,7 @@ void measure_am2320_sensor()
     conversion_ret_val = snprintf(humidity_data.value, sizeof(humidity_data.value), "%.3f", humidity);
     if (conversion_ret_val > 0)
     {
-      Serial.printf("  Humidity: %.2f %%.\n", humidity);
+      log_printf("  Humidity: %.2f %%.\n", humidity);
       sensor_buffer.push(humidity_data);
       if (num_measurement_errors > 0)
       {
@@ -318,7 +386,7 @@ void measure_am2320_sensor()
     conversion_ret_val = snprintf(temperature_data.value, sizeof(temperature_data.value), "%.3f", temperature);
     if (conversion_ret_val > 0)
     {
-      Serial.printf("  Temperature: %.2f C.\n", temperature);
+      log_printf("  Temperature: %.2f C.\n", temperature);
       sensor_buffer.push(temperature_data);
       if (num_measurement_errors > 0)
       {
@@ -441,6 +509,8 @@ void setup()
       ESP.restart();
     }
   }
+
+  setup_server();
 
   // Timer
   measurement_timer.start();
