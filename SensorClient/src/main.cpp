@@ -18,9 +18,21 @@
 const char *ssid = STASSID;
 const char *password = STAPSK;
 
-//// Server
+//// Web Server
 AsyncWebServer web_server(80);
 String web_debug_info_header, web_debug_info;
+const char web_server_html_header[] PROGMEM = R"=====(
+<!DOCTYPE HTML><html>
+<head>
+	<head>
+			<title>ESP8266 Home Sensor Client</title>
+	</head>
+<body>
+)=====";
+const char web_server_html_footer[] PROGMEM = R"=====(
+</body>
+</html>
+)=====";
 
 //// Station
 String mac_sha;
@@ -89,7 +101,7 @@ void connect_to_wifi()
   }
 
   mac_sha = sha1(WiFi.macAddress());
-  web_debug_info_header = String("ESP8266 home-sensor " + mac_sha + "\nLocated in the " + location + ".\n");
+  web_debug_info_header = String("<h2>ESP8266 home-sensor " + mac_sha + "</h2>\n<h3>Located in the " + location + ".</h3><br>");
 
   // Print ESP8266 Local IP Address
   log_print("Connected!");
@@ -200,8 +212,8 @@ bool parse_am2320_sensor_json(JsonObject &am2320_json_response)
       am2320_hum_id = mag_json["id"];
     }
   }
-  Serial.printf("  am2320_sensor_id: %d, am2320_temp_id: %d, am2320_hum_id: %d.\n",
-                am2320_sensor_id, am2320_temp_id, am2320_hum_id);
+  log_printf("  am2320_sensor_id: %d, am2320_temp_id: %d, am2320_hum_id: %d.\n",
+             am2320_sensor_id, am2320_temp_id, am2320_hum_id);
 
   return true;
 }
@@ -285,6 +297,7 @@ bool setup_sensors()
 void setup_server()
 {
   log_println("setup_server");
+
   // Web server
   web_server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
     if (!log_buffer.isEmpty())
@@ -295,11 +308,12 @@ void setup_server()
       {
         log_record = log_buffer[i];
         String message = String(log_record.message);
-        message.trim();
-        web_debug_info += UTC.dateTime(log_record.epoch) + " - " + message + "\n";
+        message.replace("\n", "");
+        web_debug_info += UTC.dateTime(log_record.epoch) + " - " + message + "<br>";
       }
     }
-    request->send(200, "text/plain", web_debug_info_header + web_debug_info);
+    request->send(200, "text/html",
+                  String(web_server_html_header) + web_debug_info_header + web_debug_info + web_server_html_footer);
   });
 
   web_server.onNotFound([](AsyncWebServerRequest *request) {
@@ -396,7 +410,7 @@ bool post_measurement(String &data, String endpoint)
   case HTTP_CODE_CREATED:
     return true;
   default:
-    Serial.println("  post_measurement HTTP Error code: " + http.errorToString(httpCode));
+    log_println("  post_measurement HTTP Error code: " + http.errorToString(httpCode));
     return false;
   }
 }
@@ -451,6 +465,8 @@ void setup()
 
   connect_to_time();
 
+  setup_server();
+
   uint8_t num_tries = 0;
   while (!setup_station())
   {
@@ -480,8 +496,6 @@ void setup()
       ESP.restart();
     }
   }
-
-  setup_server();
 
   // Timer
   measurement_timer.start();
