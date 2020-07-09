@@ -12,6 +12,7 @@
 #include <ArduinoJson.h>
 
 #include "config.h"
+#include "logging.h"
 
 //// WiFi
 const char *ssid = STASSID;
@@ -20,36 +21,6 @@ const char *password = STAPSK;
 //// Server
 AsyncWebServer web_server(80);
 String web_debug_info_header, web_debug_info;
-typedef struct
-{
-  time_t epoch;
-  char message[75];
-} LogData;
-CircularBuffer<LogData, 50> log_buffer;
-LogData log_record;
-void log_printf(const char *format, ...)
-{
-  LogData new_value{UTC.now()};
-
-  va_list arg;
-  va_start(arg, format);
-  vsnprintf(new_value.message, sizeof(new_value.message), format, arg);
-  va_end(arg);
-
-  Serial.print(new_value.message);
-
-  log_buffer.push(new_value);
-}
-void log_println(const char *str)
-{
-  LogData new_value{UTC.now()};
-
-  snprintf(new_value.message, sizeof(new_value.message), "%s", str);
-
-  Serial.println(new_value.message);
-
-  log_buffer.push(new_value);
-}
 
 //// Station
 String mac_sha;
@@ -100,7 +71,7 @@ Ticker send_timer(send_data, int(sensor_period_s / 2) * 1e3, 0, MILLIS);
 void connect_to_wifi()
 {
   // Connect to Wi-Fi
-  Serial.println("Connecting to WiFi");
+  log_println("Connecting to WiFi");
   WiFi.begin(ssid, password);
   WiFi.mode(WIFI_STA); //WiFi mode station (connect to wifi router only
   while (!WiFi.isConnected())
@@ -112,19 +83,20 @@ void connect_to_wifi()
 
   while (WiFi.waitForConnectResult() != WL_CONNECTED)
   {
-    Serial.println("Fail connecting");
+    log_println("Fail connecting");
     delay(5000);
     ESP.restart();
   }
 
   mac_sha = sha1(WiFi.macAddress());
+  web_debug_info_header = String("ESP8266 home-sensor " + mac_sha + "\nLocated in the " + location + ".\n");
 
   // Print ESP8266 Local IP Address
-  Serial.println("Connected!");
-  Serial.print("IP: ");
-  Serial.println(WiFi.localIP());
-  Serial.print("MAC sha1: ");
-  Serial.println(mac_sha);
+  log_print("Connected!");
+  log_print("IP: ");
+  log_println(WiFi.localIP().toString());
+  log_print("MAC sha1: ");
+  log_println(mac_sha);
   WiFi.setAutoReconnect(true);
 }
 
@@ -134,10 +106,10 @@ void connect_to_time()
   waitForSync();
   setInterval(60 * 60); // 1h in seconds
 
-  Serial.println("UTC: " + UTC.dateTime());
+  log_println("UTC: " + UTC.dateTime());
 
   Amsterdam.setLocation("Europe/Amsterdam");
-  Serial.println("Amsterdam time: " + Amsterdam.dateTime());
+  log_println("Amsterdam time: " + Amsterdam.dateTime());
 }
 
 bool setup_station()
@@ -149,7 +121,7 @@ bool setup_station()
     return false;
   }
 
-  Serial.println("setup_station");
+  log_println("setup_station");
 
   // Prepare JSON document
   const size_t capacity = JSON_OBJECT_SIZE(2);
@@ -172,7 +144,7 @@ bool setup_station()
   http.collectHeaders(headerNames, sizeof(headerNames) / sizeof(headerNames[0]));
 
   post_httpCode = http.POST(station_data); //Send the request
-  Serial.printf("  POST HTTP code: %d.\n", post_httpCode);
+  log_printf("  POST HTTP code: %d.\n", post_httpCode);
   switch (post_httpCode)
   {
   case HTTP_CODE_OK: // Station already existed
@@ -188,7 +160,7 @@ bool setup_station()
   station_endpoint = String(stations_endpoint) + "/" + station_id;
   sensors_endpoint = String(stations_endpoint) + "/" + station_id + "/sensors";
 
-  Serial.printf("  station_id: %d.\n", station_id);
+  log_printf("  station_id: %d.\n", station_id);
 
   http.end();
   return true;
@@ -250,7 +222,7 @@ bool setup_sensors()
     return false;
   }
 
-  Serial.println("setup_sensors");
+  log_println("setup_sensors");
 
   // Prepare JSON document
   const size_t capacity_am2320 = JSON_ARRAY_SIZE(2) + JSON_OBJECT_SIZE(2) + 2 * JSON_OBJECT_SIZE(3);
@@ -271,14 +243,14 @@ bool setup_sensors()
   int get_httpCode, put_httpCode;
   http.begin(client, server, port, sensors_endpoint);
   put_httpCode = http.PUT(sensors_data);
-  Serial.printf("  PUT HTTP code: %d.\n", put_httpCode);
+  log_printf("  PUT HTTP code: %d.\n", put_httpCode);
   switch (put_httpCode)
   {
   case HTTP_CODE_NO_CONTENT: // OK, GET sensors
     http.end();
     http.begin(client, server, port, sensors_endpoint);
     get_httpCode = http.GET();
-    Serial.printf("  GET HTTP code: %d.\n", get_httpCode);
+    log_printf("  GET HTTP code: %d.\n", get_httpCode);
     break;
   default:
     http.end();
@@ -287,7 +259,7 @@ bool setup_sensors()
 
   response = http.getString(); //Get the response payload
   http.end();
-  // Serial.printf("  rest_server response: %s.\n", response.c_str());
+  // log_printf("  rest_server response: %s.\n", response.c_str());
 
   deserializeJson(sensors_json_response, response);
   JsonArray sensors_json_out = sensors_json_response.as<JsonArray>();
@@ -312,9 +284,8 @@ bool setup_sensors()
 
 void setup_server()
 {
-  Serial.println("setup_server");
+  log_println("setup_server");
   // Web server
-  web_debug_info_header = String("ESP8266 home-sensor " + mac_sha + "\nLocated in the " + location + ".\n");
   web_server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
     if (!log_buffer.isEmpty())
     {
@@ -338,7 +309,7 @@ void setup_server()
 
   // Start server
   web_server.begin();
-  Serial.println("  done.");
+  log_println("  done.");
 }
 
 ////// Measurement functions
@@ -353,7 +324,7 @@ void measure_am2320_sensor()
 
   if (isnan(humidity))
   {
-    Serial.println("  Error reading humidity.");
+    log_println("  Error reading humidity.");
     num_measurement_errors++;
   }
   else
@@ -371,13 +342,13 @@ void measure_am2320_sensor()
     }
     else
     {
-      Serial.printf("  Problem converting humidity (%.2f %%) to char[].\n", humidity);
+      log_printf("  Problem converting humidity (%.2f %%) to char[].\n", humidity);
     }
   }
 
   if (isnan(temperature))
   {
-    Serial.println("  Error reading temperature.");
+    log_println("  Error reading temperature.");
     num_measurement_errors++;
   }
   else
@@ -395,7 +366,7 @@ void measure_am2320_sensor()
     }
     else
     {
-      Serial.printf("  Problem converting temperature (%.2f C) to char[].\n", temperature);
+      log_printf("  Problem converting temperature (%.2f C) to char[].\n", temperature);
     }
   }
 }
@@ -439,7 +410,7 @@ void send_data()
   using index_t = decltype(sensor_buffer)::index_t;
 
   const index_t num_measurements = sensor_buffer.size();
-  Serial.printf("Sending %d measurements...\n", num_measurements);
+  log_printf("Sending %d measurements...\n", num_measurements);
 
   // Prepare JSON document
   const size_t capacity = JSON_ARRAY_SIZE(num_measurements) + num_measurements * JSON_OBJECT_SIZE(4);
@@ -463,12 +434,12 @@ void send_data()
 
   if (success)
   {
-    Serial.println("  Data sent successfully.");
+    log_println("  Data sent successfully.");
     sensor_buffer.clear();
   }
   else
   {
-    Serial.println("  Data was not sent.");
+    log_println("  Data was not sent.");
   }
 }
 
