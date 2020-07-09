@@ -36,7 +36,7 @@ const char web_server_html_footer[] PROGMEM = R"=====(
 
 //// Station
 String mac_sha;
-const char *location = "living room";
+const char *location = LOCATION;
 
 //// rest server
 const char *server = SERVER_HOSTNAME;
