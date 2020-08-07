@@ -1,7 +1,12 @@
 <template>
   <div class="measurement">
     Station #{{ m.station_id }}
-    {{ Date(m.timestamp).toLocaleString().split("(")[0].trim() }}
+    {{
+      Date(m.timestamp)
+        .toLocaleString()
+        .split("(")[0]
+        .trim()
+    }}
     {{ m.magnitude.name[0].toUpperCase() + m.magnitude.name.substring(1) }}
     {{ parseFloat(m.value).toFixed(-Math.log10(m.magnitude.precision)) }} {{ m.magnitude.unit }}
   </div>
