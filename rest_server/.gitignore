@@ -8,6 +8,3 @@ __pycache__
 pip-wheel-metadata
 
 .vscode
-
-node_modules/
-/dist/

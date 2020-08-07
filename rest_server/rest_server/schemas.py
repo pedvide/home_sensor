@@ -41,7 +41,7 @@ class StationBase(BaseModel):
 
 
 class StationCreate(StationBase):
-    sensors: List[SensorCreate]
+    sensors: List[SensorCreate] = []
 
 
 class Station(StationBase):
@@ -64,8 +64,8 @@ class MeasurementCreate(MeasurementBase):
 
 class Measurement(MeasurementBase):
     id: int
-    station: Station
-    sensor: Sensor
+    station_id: int
+    sensor_id: int
     magnitude: Magnitude
 
     class Config:

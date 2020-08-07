@@ -40,7 +40,9 @@ def create_station(
     """Body must contain hash(mac).
     Return 201 + station if it didn't exist.
     Return 200 + station if it already existed."""
-    db_station = crud.get_station_by_token(db, token=station.token)
+    db_station = crud.get_station_by_token_and_location(
+        db, token=station.token, location=station.location
+    )
 
     if db_station:
         response.status_code = 200
@@ -51,17 +53,64 @@ def create_station(
     return db_station
 
 
-@router.put("/stations/{station_id}", status_code=204)
-def change_station(
-    station_id: int, new_station: schemas.StationCreate, db: Session = Depends(get_db),
-):
-    """Return 204 if change succeded"""
-    db_old_station = crud.get_station(db, station_id)
+### Station sensors
 
-    if not db_old_station:
+
+@router.get("/stations/{station_id}/sensors", response_model=List[schemas.Sensor])
+def station_sensors(
+    station_id: int, query_params: ListQueryParameters = Depends(), db: Session = Depends(get_db)
+):
+    db_station = crud.get_station(db, station_id)
+    if not db_station:
+        raise HTTPException(404, "Station not found")
+    db_sensors = crud.get_station_sensors(db, db_station, **dataclasses.asdict(query_params))
+    return db_sensors
+
+
+@router.put("/stations/{station_id}/sensors", status_code=204)
+def set_station_sensors(
+    station_id: int,
+    sensors: List[schemas.SensorCreate],
+    response: Response,
+    db: Session = Depends(get_db),
+):
+    """Sets the station's sensors to sensors"""
+
+    db_station = crud.get_station(db, station_id)
+    if not db_station:
         raise HTTPException(404, "Station not found")
 
-    crud.change_station(db, db_old_station, new_station)
+    old_sensor_names = [db_sensor.name for db_sensor in db_station.sensors]
+    new_sensor_names = [sensor.name for sensor in sensors]
+    sensor_names_add = set(new_sensor_names).difference(set(old_sensor_names))
+    sensors_add = [sensor for sensor in sensors if sensor.name in sensor_names_add]
+    db_sensor_names_delete = set(old_sensor_names).difference(set(new_sensor_names))
+    db_sensors_delete = [sensor for sensor in sensors if sensor.name in db_sensor_names_delete]
+
+    for sensor in sensors_add:
+        db_sensor = crud.get_sensor_by_name(db, sensor.name)
+        if db_sensor:
+            crud.add_station_sensor(db, db_station, db_sensor)
+        else:
+            crud.create_station_sensor(db, db_station, sensor)
+
+    for db_sensor in db_sensors_delete:
+        crud.delete_station_sensor(db, db_station, db_sensor)
+
+
+@router.get("/stations/{station_id}/sensors/{sensor_id}", response_model=schemas.Sensor)
+def station_sensor(station_id: int, sensor_id: int, db: Session = Depends(get_db)):
+    db_station = crud.get_station(db, station_id)
+    if not db_station:
+        raise HTTPException(404, "Station not found")
+    db_sensor = crud.get_sensor(db, sensor_id)
+    if not db_sensor:
+        raise HTTPException(404, "Sensor not found")
+    db_sensor = crud.get_station_sensor(db, db_station, db_sensor)
+    return db_sensor
+
+
+### Station measurements
 
 
 @router.get("/stations/{station_id}/measurements", response_model=List[schemas.Measurement])

@@ -1,16 +1,12 @@
-# home_sensor
+# rest_Server
 
 ## Deployment
 
 Install packages in requirements.txt
 
-### Deploy server
+### Deploy rest_server
 
 Copy server folder with rsync.
-
-### Deploy web client
-
-Build with `npm run build` and use rsync to copy `dist` folder to `/home/pedvide/home_sensor/client/dist`.
 
 ### Deploy backend with systemd module
 
@@ -45,15 +41,15 @@ After=network.target
 [Service]
 User=pedvide
 Group=www-data
-WorkingDirectory=/home/pedvide/home_sensor
-ExecStart=/home/pedvide/home_sensor/env/bin/gunicorn \
+WorkingDirectory=/home/pedvide/home_sensor/rest_server
+ExecStart=/home/pedvide/home_sensor/rest_server/env/bin/gunicorn \
           --access-logfile /var/log/home_sensor_backend/access.log \
           --error-logfile /var/log/home_sensor_backend/error.log \
           --workers 1 \
           --bind unix:/run/home_sensor_backend.sock \
           -k uvicorn.workers.UvicornWorker \
           --name home_sensor_backend \
-          server.app:app
+          rest_server.app:app
 
 [Install]
 WantedBy=multi-user.target
@@ -74,14 +70,14 @@ $ curl --unix-socket /run/home_sensor_backend.sock localhost/api/docs
 
 ### Configure reverse proxy
 
-nginx configuration:
+nginx configuration (includes web_client config):
 
 ```
 $ cat /etc/nginx/sites-enabled/default
 server {
         listen 80 default_server;
         listen [::]:80 default_server;
-        root /home/pedvide/home_sensor/client/dist;
+        root /home/pedvide/home_sensor/web_client/dist;
         index index.html index.htm;
 
         # backend rest server
@@ -117,7 +113,7 @@ $ sudo systemctl enable nginx.service
 
 ## Logs
 
-Nginx (both web frontend and backend server):
+Nginx (both web_client and backend rest_server):
 
 ```
 $ sudo tail /var/log/nginx/access.log
