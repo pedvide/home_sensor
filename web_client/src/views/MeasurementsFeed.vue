@@ -50,8 +50,8 @@ ol {
   display: inline-block;
   text-align: left;
 }
-li {
-  /* display: inline-block;
-  margin: 0 10px; */
-}
+/* li {
+  display: inline-block;
+  margin: 0 10px;
+} */
 </style>
