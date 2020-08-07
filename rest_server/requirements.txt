@@ -1,7 +1,7 @@
-fastapi==0.58.1
-pydantic==1.5.1
+fastapi==0.60.1
+pydantic==1.6.1
 requests==2.24.0
 SQLAlchemy==1.3.18
-starlette==0.13.4
+starlette==0.13.6
 gunicorn==20.0.4
-uvicorn==0.11.5
+uvicorn==0.11.8
