@@ -5,7 +5,7 @@ module.exports = {
     node: true,
   },
 
-  extends: ["plugin:vue/essential", "@vue/airbnb"],
+  extends: ["plugin:vue/essential", "plugin:vue/strongly-recommended", "@vue/airbnb"],
 
   parserOptions: {
     parser: "babel-eslint",
@@ -28,6 +28,4 @@ module.exports = {
       },
     ],
   },
-
-  extends: ["plugin:vue/strongly-recommended", "@vue/airbnb"],
 };
