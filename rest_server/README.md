@@ -1,8 +1,25 @@
 # rest_server
 
-## Deployment
+## Installation
 
 Create a virtual enviroment and install the packages in requirements:
+
+```bash
+python3 -m venv env
+source env/bin/activate
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
+```
+
+## Testing
+
+```bash
+pytest tests/
+```
+
+## Deployment
+
+In the production machine, create a virtual enviroment and install the packages in requirements:
 
 ```bash
 python3 -m venv env
@@ -115,6 +132,8 @@ $ curl --unix-socket /run/home_sensor_backend.sock localhost/api/docs
 ```
 
 ### Configure reverse proxy
+
+Install nginx with `sudo apt install nginx`.
 
 nginx configuration (includes web_client config):
 

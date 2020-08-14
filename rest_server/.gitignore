@@ -7,4 +7,6 @@ __pycache__
 .mypy_cache
 pip-wheel-metadata
 
+.xprocess
+
 .vscode
