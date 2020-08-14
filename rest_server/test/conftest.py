@@ -13,6 +13,20 @@ from fastapi.testclient import TestClient
 from pathlib import Path
 import pytest
 
+from xprocess import ProcessStarter
+
+
+@pytest.fixture(scope="session")
+def influxdb_server(xprocess):
+    class Starter(ProcessStarter):
+        pattern = "Listening for signals"
+        args = ["influxd"]
+
+    xprocess.ensure("influxd", Starter)
+    yield
+    xprocess.getinfo("influxd").terminate()
+
+
 database_file = "test_sql_app.db"
 database_path = Path(".") / database_file
 SQLALCHEMY_DATABASE_URL = f"sqlite:///./{database_file}"
@@ -36,7 +50,7 @@ def db_engine():
 
 
 @pytest.fixture(scope="function")
-def db_session(db_engine):
+def db_session(db_engine, influxdb_server):
     """
     Creates a new database session for a test. Note you must use this fixture
     if your test connects to db.
