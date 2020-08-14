@@ -129,11 +129,7 @@ def transform_measurement(db: Session, db_measurement: dict):
 
 
 def get_station_measurements(
-    db: Session,
-    db_influx: InfluxDBClient,
-    station_id: int,
-    offset: int = 0,
-    limit: int = 10,
+    db: Session, db_influx: InfluxDBClient, station_id: int, offset: int = 0, limit: int = 10,
 ) -> List[models.Measurement]:
     db_measurements = db_influx.query(
         f"SELECT * FROM raw_data WHERE station_id='{station_id}' LIMIT {limit} OFFSET {offset}",
@@ -167,7 +163,7 @@ def create_measurement(
     json_measurement = {
         "measurement": "raw_data",
         "time": new_measurement.pop("timestamp"),
-        "fields": {"value": new_measurement.pop("value")},
+        "fields": {"value": float(new_measurement.pop("value"))},
         "tags": {key: str(value) for key, value in new_measurement.items()},
     }
     db_influx.write_points(
