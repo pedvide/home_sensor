@@ -132,7 +132,8 @@ def get_station_measurements(
     db: Session, db_influx: InfluxDBClient, station_id: int, offset: int = 0, limit: int = 10,
 ) -> List[models.Measurement]:
     db_measurements = db_influx.query(
-        f"SELECT * FROM raw_data WHERE station_id='{station_id}' LIMIT {limit} OFFSET {offset}",
+        f"SELECT * FROM raw_data WHERE station_id='{station_id}' "
+        f"ORDER BY time DESC LIMIT {limit} OFFSET {offset}",
         epoch="s",
     ).get_points()
 
@@ -149,7 +150,7 @@ def get_all_measurements(
     limit: int = 10,
 ) -> List[models.Measurement]:
     db_measurements = db_influx.query(
-        f"SELECT * FROM raw_data LIMIT {limit} OFFSET {offset}", epoch="s",
+        f"SELECT * FROM raw_data ORDER BY time DESC LIMIT {limit} OFFSET {offset}", epoch="s",
     ).get_points()
 
     measurements = [transform_measurement(db, db_measurement) for db_measurement in db_measurements]
