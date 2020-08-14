@@ -1,5 +1,12 @@
 from rest_server.app import app as app
-from rest_server.database import get_db, create_engine, sessionmaker, Base
+from rest_server.database import (
+    get_db,
+    get_influx_db,
+    create_engine,
+    sessionmaker,
+    Base,
+    InfluxDBClient,
+)
 
 from fastapi.testclient import TestClient
 
@@ -35,11 +42,6 @@ def db_session(db_engine):
     if your test connects to db.
     """
 
-    connection = db_engine.connect()
-    transaction = connection.begin()
-    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=connection)
-    session = TestingSessionLocal()
-
     def override_get_db():
         try:
             db = TestingSessionLocal()
@@ -47,13 +49,33 @@ def db_session(db_engine):
         finally:
             db.close()
 
-    app.dependency_overrides[get_db] = override_get_db
+    def override_get_influx_db():
+        try:
+            client = InfluxDBClient(host="localhost", port=8086, username="homesensor", password="")
+            client.create_database("testing")
+            client.switch_database("testing")
+            yield client
+        finally:
+            client.close()
 
-    yield session
+    try:
+        connection = db_engine.connect()
+        transaction = connection.begin()
+        TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=connection)
+        session = TestingSessionLocal()
 
-    session.close()
-    transaction.rollback()
-    connection.close()
+        app.dependency_overrides[get_db] = override_get_db
+        app.dependency_overrides[get_influx_db] = override_get_influx_db
+
+        yield session
+    finally:
+        session.close()
+        transaction.rollback()
+        connection.close()
+
+        client = InfluxDBClient(host="localhost", port=8086, username="homesensor", password="")
+        client.drop_database("testing")
+        client.close()
 
 
 @pytest.fixture(scope="session")
