@@ -156,7 +156,6 @@ def test_create_same_station_sensor_twice(client, db_session, station_one, senso
 
 
 def test_create_two_stations_same_sensor(client, db_session, station_one, station_two, sensor_one):
-    from rest_server import models
 
     station1_in, station1_out = station_one
     station2_in, station2_out = station_two
@@ -165,18 +164,10 @@ def test_create_two_stations_same_sensor(client, db_session, station_one, statio
     client.post("/api/stations", json=station1_in)
     client.put("/api/stations/1/sensors", json=[sensor1_in])
 
-    print(db_session.query(models.Station).all())
-    print(db_session.query(models.Sensor).all())
-    print(db_session.query(models.StationSensor).all())
-
     # create new station with the same sensor
     client.post("/api/stations", json=station2_in)
     response = client.put("/api/stations/2/sensors", json=[sensor1_in])
     assert response.status_code == 204
-
-    print(db_session.query(models.Station).all())
-    print(db_session.query(models.Sensor).all())
-    print(db_session.query(models.StationSensor).all())
 
     response = client.get("/api/stations/1/sensors")
     assert response.status_code == 200
