@@ -126,3 +126,20 @@ Only backend service:
 $ sudo tail /var/log/home_sensor_backend/access.log
 $ sudo tail /var/log/home_sensor_backend/error.log
 ```
+
+## Copy sqlite to influxdb
+
+```python
+import pandas as pd
+import sqlite3
+con = sqlite3.connect("sql_app.db")
+df = pd.read_sql_query("SELECT * from measurements", con)
+df = df.set_index(pd.to_datetime(df.timestamp, unit="s"))
+df = df.drop(columns=["id", "timestamp"])
+df.value = df.value.astype("float")
+
+from influxdb import DataFrameClient
+client = DataFrameClient(host='localhost', port=8086, username="homesensor", password="", database="home_sensor")
+
+client.write_points(df, "raw_data", tag_columns=["station_id", "sensor_id", "magnitude_id"], field_columns=["value"], time_precision="s", batch_size=1000)
+```
