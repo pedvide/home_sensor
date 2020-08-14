@@ -17,7 +17,6 @@ class Magnitude(Base):
     sensor_id = Column(Integer, ForeignKey("sensors.id"))
 
     sensor = relationship("Sensor", back_populates="magnitudes")
-    measurements = relationship("Measurement", back_populates="magnitude", lazy="dynamic")
 
     def __repr__(self):
         return (
@@ -73,7 +72,6 @@ class Sensor(Base):
         ]
 
     magnitudes = relationship("Magnitude", back_populates="sensor",)
-    measurements = relationship("Measurement", back_populates="sensor", lazy="dynamic")
 
     def __repr__(self):
         return f"Sensor(id={self.id}, name={self.name})"
@@ -102,8 +100,6 @@ class Station(Base):
             if station_sensor.valid_until is None
         ]
 
-    measurements = relationship("Measurement", back_populates="station", lazy="dynamic")
-
     def __repr__(self):
         return f"Station(id={self.id}, token={self.token}, location={self.location})"
 
@@ -117,11 +113,9 @@ class Measurement(Base):
     value = Column(String, nullable=False)
 
     station_id = Column(Integer, ForeignKey("stations.id"), nullable=False)
-    station = relationship("Station", back_populates="measurements")
     sensor_id = Column(Integer, ForeignKey("sensors.id"), nullable=False)
-    sensor = relationship("Sensor", back_populates="measurements")
     magnitude_id = Column(Integer, ForeignKey("magnitudes.id"), nullable=False)
-    magnitude = relationship("Magnitude", back_populates="measurements")
+    magnitude = relationship("Magnitude")
 
     def __repr__(self):
         return f"Measurement(id={self.id}, timestamp={self.timestamp}, value={self.value})"

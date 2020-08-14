@@ -1,7 +1,7 @@
 from fastapi import HTTPException, Response, Depends, APIRouter
 
 from . import crud, schemas
-from .database import Session, get_db
+from .database import Session, get_db, InfluxDBClient, get_influx_db
 
 from typing import List
 import dataclasses
@@ -115,12 +115,15 @@ def station_sensor(station_id: int, sensor_id: int, db: Session = Depends(get_db
 
 @router.get("/stations/{station_id}/measurements", response_model=List[schemas.Measurement])
 def station_measurements(
-    station_id: int, query_params: ListQueryParameters = Depends(), db: Session = Depends(get_db)
+    station_id: int,
+    query_params: ListQueryParameters = Depends(),
+    db: Session = Depends(get_db),
+    db_influx: InfluxDBClient = Depends(get_influx_db),
 ):
     if not crud.get_station(db, station_id):
         raise HTTPException(404, "Station not found")
     db_measurements = crud.get_station_measurements(
-        db, station_id, **dataclasses.asdict(query_params)
+        db, db_influx, station_id, **dataclasses.asdict(query_params)
     )
     return db_measurements
 
@@ -131,7 +134,10 @@ def station_measurements(
     response_model=List[schemas.Measurement],
 )
 def create_measurement(
-    station_id: int, measurements: List[schemas.MeasurementCreate], db: Session = Depends(get_db),
+    station_id: int,
+    measurements: List[schemas.MeasurementCreate],
+    db: Session = Depends(get_db),
+    db_influx: InfluxDBClient = Depends(get_influx_db),
 ):
     """Return 201 + id."""
     if not crud.get_station(db, station_id):
@@ -143,7 +149,8 @@ def create_measurement(
             raise HTTPException(404, f"Magnitude not found in measurement {num}.")
 
     db_measurements = [
-        crud.create_measurement(db, station_id, measurement) for measurement in measurements
+        crud.create_measurement(db, db_influx, station_id, measurement)
+        for measurement in measurements
     ]
     return db_measurements
 
@@ -160,9 +167,9 @@ def all_sensors(query_params: ListQueryParameters = Depends(), db: Session = Dep
 @router.get("/measurements", response_model=List[schemas.Measurement])
 def all_measurements(
     query_params: ListQueryParameters = Depends(),
-    order: str = "timestamp",
     db: Session = Depends(get_db),
+    db_influx: InfluxDBClient = Depends(get_influx_db),
 ):
     """Return all measurements that match the query"""
-    db_measurements = crud.get_all_measurements(db, order=order, **dataclasses.asdict(query_params))
+    db_measurements = crud.get_all_measurements(db, db_influx, **dataclasses.asdict(query_params))
     return db_measurements

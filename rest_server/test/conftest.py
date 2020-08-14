@@ -128,7 +128,7 @@ def measurement_one(station_one, sensor_one):
         value="25.3",
     )
     m1_out = dict(
-        id=1,
+        # id=1,
         station_id=station_out["id"],
         sensor_id=sensor_out["id"],
         magnitude=magnitude_out,
@@ -152,7 +152,7 @@ def measurement_two(station_one, sensor_one):
         value="20.3",
     )
     m2_out = dict(
-        id=2,
+        # id=2,
         station_id=station_out["id"],
         sensor_id=sensor_out["id"],
         magnitude=magnitude_out,
