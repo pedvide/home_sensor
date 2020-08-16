@@ -7,18 +7,7 @@ The stations connect and send data to the rest_server.
 
 ## Deployment
 
-Add a `config.h` file in the `include/` folder with the following data:
-
-```cpp
-#ifndef STASSID
-#define STASSID "WIFI ID"
-#define STAPSK "WIFI PASSWORD"
-#endif
-
-#define SERVER_HOSTNAME "hostname of the rest_server"
-
-#define LOCATION "location of this station, change for each station!"
-```
+Change the values in the `include/config.h.example` file to your settings and save it without the `.example` extension.
 
 Install platformIO or Arduino. Install the ESP8266 extension.
 
