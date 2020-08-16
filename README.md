@@ -14,7 +14,7 @@ Gets data from the SensorClients and is used by the web_client to display sensor
 
 ## SensorClient
 
-Aruidno code deployed to the ESP8266 sensor stations.
+Arduino code deployed to the ESP8266 sensor stations.
 Deploy with PlatformIO or Arduino. They connect and send data to the rest_server.
 
 ## SensorServer
