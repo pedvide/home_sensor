@@ -1,11 +1,1 @@
-env
-__pycache__
-*.pyc
 .vscode
-workspace.code-workspace
-config.h
-
-.pio
-.coverage
-htmlcov
-sql_app.db

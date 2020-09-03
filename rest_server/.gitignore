@@ -2,10 +2,12 @@ env
 
 __pycache__
 *.pyc
-
 *.egg-info
 .mypy_cache
 pip-wheel-metadata
+htmlcov
+.xprocess
+.coverage
 
 .xprocess
 
