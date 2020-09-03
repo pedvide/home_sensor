@@ -9,6 +9,6 @@ htmlcov
 .xprocess
 .coverage
 
-.xprocess
-
 .vscode
+
+sql_app.db
