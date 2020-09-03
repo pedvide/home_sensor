@@ -1,5 +1,5 @@
 from . import models, schemas
-from .database import Session
+from .database import Session, InfluxDBClient
 from typing import List, Optional
 from datetime import datetime
 
@@ -119,38 +119,59 @@ def delete_station_sensor(
     db.commit()
 
 
+def transform_measurement(db: Session, db_measurement: dict):
+    """Enrich the influxdb measurement to adapt to schema"""
+    return {
+        **db_measurement,
+        "timestamp": db_measurement["time"],
+        "magnitude": get_magnitude(db, db_measurement["magnitude_id"]),
+    }
+
+
 def get_station_measurements(
-    db: Session, station_id: int, order: str = "timestamp", offset: int = 0, limit: int = 10
+    db: Session, db_influx: InfluxDBClient, station_id: int, offset: int = 0, limit: int = 10,
 ) -> List[models.Measurement]:
-    return (
-        db.query(models.Station)
-        .get(station_id)
-        .measurements.order_by(getattr(models.Measurement, order, "timestamp").desc())
-        .limit(limit)
-        .offset(offset)
-        .all()
-    )
+    db_measurements = db_influx.query(
+        f"SELECT * FROM raw_data WHERE station_id='{station_id}' "
+        f"ORDER BY time DESC LIMIT {limit} OFFSET {offset}",
+        epoch="s",
+    ).get_points()
+
+    measurements = [transform_measurement(db, db_measurement) for db_measurement in db_measurements]
+    return measurements
 
 
 # Measurements
 def get_all_measurements(
-    db: Session, order: str = "timestamp", offset: int = 0, limit: int = 10
+    db: Session,
+    db_influx: InfluxDBClient,
+    order: str = "timestamp",
+    offset: int = 0,
+    limit: int = 10,
 ) -> List[models.Measurement]:
-    return (
-        db.query(models.Measurement)
-        .order_by(getattr(models.Measurement, order, "timestamp").desc())
-        .limit(limit)
-        .offset(offset)
-        .all()
-    )
+    db_measurements = db_influx.query(
+        f"SELECT * FROM raw_data ORDER BY time DESC LIMIT {limit} OFFSET {offset}", epoch="s",
+    ).get_points()
+
+    measurements = [transform_measurement(db, db_measurement) for db_measurement in db_measurements]
+    return measurements
 
 
 def create_measurement(
-    db: Session, station_id: int, measurement: schemas.MeasurementCreate
+    db: Session, db_influx: InfluxDBClient, station_id: int, measurement: schemas.MeasurementCreate
 ) -> models.Measurement:
-    db_measurement = models.Measurement(station_id=station_id, **measurement.dict())
-
-    db.add(db_measurement)
-    db.commit()
-    db.refresh(db_measurement)
-    return db_measurement
+    new_measurement = dict(station_id=station_id, **measurement.dict())
+    json_measurement = {
+        "measurement": "raw_data",
+        "time": new_measurement.pop("timestamp"),
+        "fields": {"value": float(new_measurement.pop("value"))},
+        "tags": {key: str(value) for key, value in new_measurement.items()},
+    }
+    db_influx.write_points(
+        [json_measurement], time_precision="s",
+    )
+    return dict(
+        station_id=station_id,
+        **measurement.dict(),
+        magnitude=get_magnitude(db, measurement.magnitude_id),
+    )

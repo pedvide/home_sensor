@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List
 
 
@@ -63,10 +63,12 @@ class MeasurementCreate(MeasurementBase):
 
 
 class Measurement(MeasurementBase):
-    id: int
+    # id: int
+    time: int = Field(alias="timestamp")
     station_id: int
     sensor_id: int
     magnitude: Magnitude
 
     class Config:
         orm_mode = True
+        allow_population_by_field_name = True

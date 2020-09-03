@@ -1,12 +1,75 @@
-# rest_Server
+# rest_server
+
+## Installation
+
+Create a virtual enviroment and install the packages in requirements:
+
+```bash
+python3 -m venv env
+source env/bin/activate
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
+```
+
+## Testing
+
+```bash
+pytest tests/
+```
 
 ## Deployment
 
-Install packages in requirements.txt
+In the production machine, create a virtual enviroment and install the packages in requirements:
+
+```bash
+python3 -m venv env
+source env/bin/activate
+pip install -r requirements.txt
+```
+
+Install influxdb:
+
+```bash
+sudo apt update
+sudo apt upgrade -y
+
+wget -qO- https://repos.influxdata.com/influxdb.key | sudo apt-key add -
+source /etc/os-release
+echo "deb https://repos.influxdata.com/debian $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/influxdb.list
+
+sudo apt update && sudo apt install -y influxdb
+```
+
+Check the settings with `sudo vim /etc/influxdb/influxdb.conf`.
+
+Start service:
+
+```bash
+sudo systemctl unmask influxdb.service
+sudo systemctl start influxdb
+sudo systemctl enable influxdb.service
+```
+
+Setup database:
+
+```sql
+create database home_sensor
+use home_sensor
+
+create user homesensor with password '' with all privileges
+grant all privileges on home_sensor to homesensor
+```
 
 ### Deploy rest_server
 
 Copy server folder with rsync.
+Test that it runs with
+
+```
+$ gunicorn -k uvicorn.workers.UvicornWorker server.app:app --reload --bind 0.0.0.0:8080 -w 1 --access-logfile -
+```
+
+Go to `<hostname>:8080/api/docs` to see docs page.
 
 ### Deploy backend with systemd module
 
@@ -70,6 +133,8 @@ $ curl --unix-socket /run/home_sensor_backend.sock localhost/api/docs
 
 ### Configure reverse proxy
 
+Install nginx with `sudo apt install nginx`.
+
 nginx configuration (includes web_client config):
 
 ```
@@ -125,4 +190,21 @@ Only backend service:
 ```
 $ sudo tail /var/log/home_sensor_backend/access.log
 $ sudo tail /var/log/home_sensor_backend/error.log
+```
+
+## Copy sqlite to influxdb
+
+```python
+import pandas as pd
+import sqlite3
+con = sqlite3.connect("sql_app.db")
+df = pd.read_sql_query("SELECT * from measurements", con)
+df = df.set_index(pd.to_datetime(df.timestamp, unit="s"))
+df = df.drop(columns=["id", "timestamp"])
+df.value = df.value.astype("float")
+
+from influxdb import DataFrameClient
+client = DataFrameClient(host='localhost', port=8086, username="homesensor", password="", database="home_sensor")
+
+client.write_points(df, "raw_data", tag_columns=["station_id", "sensor_id", "magnitude_id"], field_columns=["value"], time_precision="s", batch_size=1000)
 ```
