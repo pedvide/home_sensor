@@ -27,7 +27,8 @@ Build image
 docker build -t rest_server -f docker/Dockerfile .
 ```
 
-Create a influxdb container, with a bridge network called influxdb, and execute:
+Create a influxdb container, with a bridge network called influxdb,
+and execute to create a database and user.
 
 ```bash
 curl -POST -u influx_admin:influx_admin123 http://localhost:8086/query \
@@ -37,63 +38,17 @@ curl -POST -u influx_admin:influx_admin123 http://localhost:8086/query \
 Run container:
 
 ```bash
-docker run -d --name home_sensor_rest_server -p 80:80 \
+docker run -d --name homesensor -p 80:80 \
   -e MAX_WORKERS=1 \
   --net influxdb \
   -v /home/pedvide/home-sensor/rest_server/sql_app.db:/sql_app.db \
   rest_server
 ```
 
-### Configure reverse proxy
-
-Install nginx with `sudo apt install nginx`.
-
-nginx configuration (includes web_client config):
-
-```
-$ cat /etc/nginx/sites-enabled/default
-server {
-        listen 80 default_server;
-        listen [::]:80 default_server;
-        root /home/pedvide/home_sensor/web_client/dist;
-        index index.html index.htm;
-
-        # backend rest server
-        location /api {
-                include proxy_params;
-                proxy_pass http://unix:/run/home_sensor_backend.sock;
-        }
-        # backend rest server docs
-        location ~ (/docs|/redoc|/openapi.json) {
-                include proxy_params;
-                proxy_pass http://unix:/run/home_sensor_backend.sock;
-        }
-
-        # ignore errors accesing favicon
-        location = /favicon.ico { access_log off; log_not_found off; }
-
-        # front end client app
-        location / {
-                # First attempt to serve request as file, then
-                # as directory, then index.html then fall back to displaying a 404.
-                try_files $uri $uri/ /index.html =404;
-        }
-
-}
-```
-
-Start nginx service:
-
-```bash
-$ sudo systemctl start nginx.service
-$ sudo systemctl enable nginx.service
-```
-
 ## Logs
 
 ```bash
-docker logs home_sensor_rest_server
-# docker logs home_sensor_web_client
+docker logs homesensor
 ```
 
 ## Copy sqlite to influxdb
