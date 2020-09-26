@@ -99,10 +99,8 @@ curl -POST -u influx_admin:influx_admin123 http://localhost:8086/query \
 
 ## Run container
 
-Bug: the image has gid 998 for the docker socket.
-
 ```bash
-docker run -d --user "$(id -u telegraf)":998 --name=telegraf \
+docker run -d --user "$(id -u telegraf)":"$(getent group docker | cut -d: -f3)" --name=telegraf \
  --net influxdb \
  -e HOST_HOSTNAME=`hostname` \
  -e HOST_PROC=/host/proc -v /proc:/host/proc:ro \
