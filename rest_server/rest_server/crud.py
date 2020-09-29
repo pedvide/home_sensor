@@ -164,20 +164,37 @@ def get_all_measurements(
 def create_measurement(
     db: Session, db_influx: InfluxDBClient, station_id: int, measurement: schemas.MeasurementCreate
 ) -> models.Measurement:
-    new_measurement = dict(station_id=station_id, **measurement.dict())
+    """Create a measurement and send it to influxdb"""
+    time = measurement.timestamp
+    value = float(measurement.value)
+    station = get_station(db, station_id)
+
+    magnitude_id = str(measurement.magnitude_id)
+    magnitude = get_magnitude(db, magnitude_id)
+
+    sensor_id = str(measurement.sensor_id)
+    sensor = get_sensor(db, sensor_id)
+
     json_measurement = {
         "measurement": "raw_data",
-        "time": new_measurement.pop("timestamp"),
-        "fields": {"value": float(new_measurement.pop("value"))},
-        "tags": {key: str(value) for key, value in new_measurement.items()},
+        "time": time,
+        "fields": {"value": value},
+        "tags": dict(
+            station_id=station_id,
+            station_location=station.location,
+            magnitude_id=magnitude_id,
+            magnitude_name=magnitude.name,
+            sensor_id=sensor_id,
+            sensor_name=sensor.name,
+        ),
     }
     success = db_influx.write_points([json_measurement], time_precision="s",)
 
     if success:
-    return dict(
-        station_id=station_id,
-        **measurement.dict(),
-        magnitude=get_magnitude(db, measurement.magnitude_id),
-    )
+        return dict(
+            station_id=station_id,
+            **measurement.dict(),
+            magnitude=get_magnitude(db, measurement.magnitude_id),
+        )
     else:
         raise InfluxDBError("Error writing a measurement")
