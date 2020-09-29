@@ -148,10 +148,7 @@ def create_measurement(
         if not crud.get_magnitude(db, measurement.magnitude_id):
             raise HTTPException(404, f"Magnitude not found in measurement {num}.")
 
-    db_measurements = [
-        crud.create_measurement(db, db_influx, station_id, measurement)
-        for measurement in measurements
-    ]
+    db_measurements = crud.create_measurements(db, db_influx, station_id, measurements)
     return db_measurements
 
 
