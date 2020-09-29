@@ -6,6 +6,10 @@ from datetime import datetime
 # from pprint import pprint
 
 
+class InfluxDBError(Exception):
+    pass
+
+
 # Magnitudes
 def get_magnitude(db: Session, magnitude_id: int) -> Optional[models.Magnitude]:
     return db.query(models.Magnitude).get(magnitude_id)
@@ -167,11 +171,13 @@ def create_measurement(
         "fields": {"value": float(new_measurement.pop("value"))},
         "tags": {key: str(value) for key, value in new_measurement.items()},
     }
-    db_influx.write_points(
-        [json_measurement], time_precision="s",
-    )
+    success = db_influx.write_points([json_measurement], time_precision="s",)
+
+    if success:
     return dict(
         station_id=station_id,
         **measurement.dict(),
         magnitude=get_magnitude(db, measurement.magnitude_id),
     )
+    else:
+        raise InfluxDBError("Error writing a measurement")
