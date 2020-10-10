@@ -38,11 +38,12 @@ curl -POST -u influx_admin:influx_admin123 http://localhost:8086/query \
 Run container:
 
 ```bash
-docker run -d --name homesensor -p 80:80 \
+docker run -d --name homesensor -p 80:8080 \
   --restart=always \
   -e MAX_WORKERS=1 \
   --net influxdb \
   -v /home/pedvide/home-sensor/rest_server/sql_app.db:/app/sql_app.db \
+  --user nobody \
   rest_server
 ```
 
