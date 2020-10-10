@@ -37,4 +37,13 @@ ENTRYPOINT ["/entrypoint.sh"]
 CMD ["telegraf"]
 
 # build:  docker build -t telegraf-armhf .
-# run: docker run -d --user "$(id -u telegraf)":"$(getent group docker | cut -d: -f3)" --name=telegraf  -e HOST_HOSTNAME=`hostname`  -e HOST_PROC=/host/proc -v /proc:/host/proc:ro  -e HOST_SYS=/host/sys -v /sys:/host/sys:ro  -e HOST_VAR=/host/var -v /var:/host/var:ro  -v /var/run/docker.sock:/var/run/docker.sock  -v /etc/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro  telegraf-armhf
+# run: docker run -d --user "$(id -u telegraf)":"$(getent group docker | cut -d: -f3)" --name=telegraf  \
+#  --restart=always 
+#  -e HOST_HOSTNAME=`hostname` \
+#  -e HOST_MOUNT_PREFIX=/hostfs -v /:/hostfs:ro \
+#  -e HOST_PROC=/hostfs/proc  \
+#  -e HOST_SYS=/hostfs/sys \
+#  -e HOST_VAR=/hostfs/var \
+#  -v /var/run/docker.sock:/var/run/docker.sock \ 
+#  -v /etc/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro \
+#  telegraf-armhf
