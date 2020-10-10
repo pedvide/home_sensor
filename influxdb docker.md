@@ -29,6 +29,7 @@ docker run --rm -e INFLUXDB_HTTP_AUTH_ENABLED=true \
 ```bash
 docker run -d -p 8086:8086 --net influxdb \
  --user "$(id -u influxdb)":"$(id -g influxdb)" --name=influxdb \
+ --restart=always \
  -v /var/lib/influxdb:/var/lib/influxdb \
  -e INFLUXDB_REPORTING_DISABLED=true \
  -e INFLUXDB_HTTP_AUTH_ENABLED=true \
@@ -99,13 +100,16 @@ curl -POST -u influx_admin:influx_admin123 http://localhost:8086/query \
 
 ## Run container
 
+Use the docker gid to be able to access the docker socket
+
 ```bash
 docker run -d --user "$(id -u telegraf)":"$(getent group docker | cut -d: -f3)" --name=telegraf \
- --net influxdb \
+ --net influxdb --restart=always \
  -e HOST_HOSTNAME=`hostname` \
- -e HOST_PROC=/host/proc -v /proc:/host/proc:ro \
- -e HOST_SYS=/host/sys -v /sys:/host/sys:ro \
- -e HOST_VAR=/host/var -v /var:/host/var:ro \
+ -e HOST_MOUNT_PREFIX=/hostfs -v /:/hostfs:ro \
+ -e HOST_PROC=/hostfs/proc  \
+ -e HOST_SYS=/hostfs/sys \
+ -e HOST_VAR=/hostfs/var \
  -v /var/run/docker.sock:/var/run/docker.sock \
  -v /etc/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro \
  telegraf
@@ -132,20 +136,22 @@ sudo chown grafana:grafana /var/lib/grafana
 
 ```bash
 docker run -d --name=grafana -p 3000:3000 --net influxdb \
+--restart=always \
  -v "/var/lib/grafana/:/var/lib/grafana" \
  -e GF_DISABLE_INITIAL_ADMIN_CREATION=true \
  -e GF_SECURITY_ADMIN_USER=admin -e GF_SECURITY_ADMIN_PASSWORD=grafana123 \
+ -e GF_DATE_FORMATS_INTERVAL_DAY='DD/MM' -e GF_DATE_FORMATS_INTERVAL_HOUR='DD/MM HH:mm' \
  --user "$(id -u grafana)":"$(id -g grafana)" \
  grafana/grafana
 ```
-
-`docker network connect web grafana`
 
 ## Setup
 
 Go to hostname:3000.
 
 Use admin:grafana123 to log in.
+
+```bash
 curl -d '{
 "name": "InfluxDB_telegraf",
 "type": "influxdb",
@@ -160,6 +166,7 @@ curl -d '{
 "user": "telegraf",
 "password": "telegraf123",
 }' http://admin:grafana123@localhost:3000/api/datasources
+```
 
 Add a new data source of type Influxdb, set the URL as "http://influxdb:8086".
 
