@@ -104,21 +104,21 @@ class Station(Base):
         return f"Station(id={self.id}, token={self.token}, location={self.location})"
 
 
-class Measurement(Base):
-    __tablename__ = "measurements"
+# class Measurement(Base):
+#     __tablename__ = "measurements"
 
-    id = Column(Integer, primary_key=True, index=True)
+#     id = Column(Integer, primary_key=True, index=True)
 
-    timestamp = Column(Integer, nullable=False, index=True)
-    value = Column(String, nullable=False)
+#     timestamp = Column(Integer, nullable=False, index=True)
+#     value = Column(String, nullable=False)
 
-    station_id = Column(Integer, ForeignKey("stations.id"), nullable=False)
-    sensor_id = Column(Integer, ForeignKey("sensors.id"), nullable=False)
-    magnitude_id = Column(Integer, ForeignKey("magnitudes.id"), nullable=False)
-    magnitude = relationship("Magnitude")
+#     station_id = Column(Integer, ForeignKey("stations.id"), nullable=False)
+#     sensor_id = Column(Integer, ForeignKey("sensors.id"), nullable=False)
+#     magnitude_id = Column(Integer, ForeignKey("magnitudes.id"), nullable=False)
+#     magnitude = relationship("Magnitude")
 
-    def __repr__(self):
-        return f"Measurement(id={self.id}, timestamp={self.timestamp}, value={self.value})"
+#     def __repr__(self):
+#         return f"Measurement(id={self.id}, timestamp={self.timestamp}, value={self.value})"
 
 
 # Base.metadata.create_all(bind=engine)
