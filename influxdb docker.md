@@ -100,6 +100,12 @@ curl -POST -u influx_admin:influx_admin123 http://localhost:8086/query \
 
 ## Run container
 
+Build the telegraf-monitoring image in the folder with the Dockerfile.telegraf-monitoring:
+
+```bash
+docker build -t telegraf-monitoring .
+```
+
 Use the docker gid to be able to access the docker socket
 
 ```bash
@@ -112,7 +118,7 @@ docker run -d --user "$(id -u telegraf)":"$(getent group docker | cut -d: -f3)" 
  -e HOST_VAR=/hostfs/var \
  -v /var/run/docker.sock:/var/run/docker.sock \
  -v /etc/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro \
- telegraf
+ telegraf-monitoring
 ```
 
 ## Test
