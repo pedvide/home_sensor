@@ -85,7 +85,11 @@ def set_station_sensors(
     sensor_names_add = set(new_sensor_names).difference(set(old_sensor_names))
     sensors_add = [sensor for sensor in sensors if sensor.name in sensor_names_add]
     db_sensor_names_delete = set(old_sensor_names).difference(set(new_sensor_names))
-    db_sensors_delete = [sensor for sensor in sensors if sensor.name in db_sensor_names_delete]
+    db_sensors_delete = [
+        sensor
+        for sensor in crud.get_station_sensors(db, db_station)
+        if sensor.name in db_sensor_names_delete
+    ]
 
     for sensor in sensors_add:
         db_sensor = crud.get_sensor_by_name(db, sensor.name)
