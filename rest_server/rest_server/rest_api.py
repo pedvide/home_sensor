@@ -36,7 +36,7 @@ def station(station_id: int, db: Session = Depends(get_db)):
 @router.post("/stations", status_code=201, response_model=schemas.Station)
 def create_station(
     station: schemas.StationCreate, response: Response, db: Session = Depends(get_db)
-):
+) -> schemas.Station:
     """Body must contain hash(mac).
     Return 201 + station if it didn't exist.
     Return 200 + station if it already existed."""
@@ -65,6 +65,35 @@ def station_sensors(
         raise HTTPException(404, "Station not found")
     db_sensors = crud.get_station_sensors(db, db_station, **dataclasses.asdict(query_params))
     return db_sensors
+
+
+@router.post("/stations/{station_id}/sensors", status_code=201, response_model=schemas.Sensor)
+def create_station_sensor(
+    station_id: int,
+    sensor: schemas.SensorCreate,
+    response: Response,
+    db: Session = Depends(get_db),
+):
+    """Sets the station's sensors to sensors"""
+
+    db_station = crud.get_station(db, station_id)
+    if not db_station:
+        raise HTTPException(404, "Station not found")
+
+    # if sensor already exists in sensors, don't duplicate it
+    db_sensor = crud.get_sensor_by_name(db, sensor.name)
+    if not db_sensor:
+        db_sensor = crud.create_sensor(db, sensor)
+
+    # if sensor is already a sensor in this station, don't duplicate it either
+    db_station_sensor = crud.get_station_sensor(db, db_station, db_sensor)
+    if not db_station_sensor:
+        db_station_sensor = crud.add_station_sensor(db, db_station, db_sensor)
+    else:
+        response.status_code = 200
+
+    response.headers["Location"] = str(db_station_sensor.id)
+    return db_station_sensor
 
 
 @router.put("/stations/{station_id}/sensors", status_code=204)
