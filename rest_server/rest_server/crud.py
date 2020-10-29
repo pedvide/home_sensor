@@ -95,6 +95,8 @@ def get_station_sensor(
 def add_station_sensor(db: Session, db_station: models.Station, db_sensor: models.Sensor) -> None:
     db_station.add_sensor(db_sensor)
     db.commit()
+    db.refresh(db_sensor)
+    return db_sensor
 
 
 def create_station_sensor(
