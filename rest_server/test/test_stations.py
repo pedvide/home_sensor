@@ -7,7 +7,7 @@ def test_get_wrong_station(client, db_session):
     assert "Station not found" in response.json().values()
 
 
-def test_create_get_one_station(client, db_session, station_one):
+def test_create_one_station(client, db_session, station_one):
     station_in, station_out = station_one
 
     response = client.post("/api/stations", json=station_in)
@@ -25,7 +25,7 @@ def test_create_get_one_station(client, db_session, station_one):
     assert response.json() == [station_out]
 
 
-def test_create_get_two_stations(client, db_session, station_one, station_two):
+def test_create_two_stations(client, db_session, station_one, station_two):
 
     station1_in, station1_out = station_one
     station2_in, station2_out = station_two
@@ -98,14 +98,14 @@ def test_create_station_with_sensors(client, db_session, station_one, sensor_one
     assert response.json() == sensor_out
 
 
-def test_create_get_station_sensors(client, db_session, station_one, sensor_one):
+def test_create_station_sensors(client, db_session, station_one, sensor_one):
     station_in, station_out = station_one
     sensor_in, sensor_out = sensor_one
 
     client.post("/api/stations", json=station_in)
 
-    response = client.put("/api/stations/1/sensors", json=[sensor_in])
-    assert response.status_code == 204
+    response = client.post("/api/stations/1/sensors", json=sensor_in)
+    assert response.status_code == 201
 
     response = client.get("/api/stations/1/sensors")
     assert response.status_code == 200
@@ -116,15 +116,17 @@ def test_create_get_station_sensors(client, db_session, station_one, sensor_one)
     assert response.json() == sensor_out
 
 
-def test_create_get_two_station_sensors(client, db_session, station_one, sensor_one, sensor_two):
+def test_create_two_station_sensors(client, db_session, station_one, sensor_one, sensor_two):
     station_in, station_out = station_one
     sensor1_in, sensor1_out = sensor_one
     sensor2_in, sensor2_out = sensor_two
 
     client.post("/api/stations", json=station_in)
 
-    response = client.put("/api/stations/1/sensors", json=[sensor1_in, sensor2_in])
-    assert response.status_code == 204
+    response = client.post("/api/stations/1/sensors", json=sensor1_in)
+    assert response.status_code == 201
+    response = client.post("/api/stations/1/sensors", json=sensor2_in)
+    assert response.status_code == 201
 
     response = client.get("/api/stations/1/sensors")
     assert response.status_code == 200
@@ -144,11 +146,10 @@ def test_create_same_station_sensor_twice(client, db_session, station_one, senso
     sensor1_in, sensor1_out = sensor_one
 
     client.post("/api/stations", json=station_in)
-    client.put("/api/stations/1/sensors", json=[sensor1_in])
+    client.post("/api/stations/1/sensors", json=sensor1_in)
 
-    # PUT is idempotent, so it shouldn't duplicate
-    response = client.put("/api/stations/1/sensors", json=[sensor1_in])
-    assert response.status_code == 204
+    response = client.post("/api/stations/1/sensors", json=sensor1_in)
+    assert response.status_code == 200
 
     response = client.get("/api/stations/1/sensors")
     assert response.status_code == 200
@@ -162,12 +163,12 @@ def test_create_two_stations_same_sensor(client, db_session, station_one, statio
     sensor1_in, sensor1_out = sensor_one
 
     client.post("/api/stations", json=station1_in)
-    client.put("/api/stations/1/sensors", json=[sensor1_in])
+    client.post("/api/stations/1/sensors", json=sensor1_in)
 
     # create new station with the same sensor
     client.post("/api/stations", json=station2_in)
-    response = client.put("/api/stations/2/sensors", json=[sensor1_in])
-    assert response.status_code == 204
+    response = client.post("/api/stations/2/sensors", json=sensor1_in)
+    assert response.status_code == 201
 
     response = client.get("/api/stations/1/sensors")
     assert response.status_code == 200
@@ -176,3 +177,23 @@ def test_create_two_stations_same_sensor(client, db_session, station_one, statio
     response = client.get("/api/stations/2/sensors")
     assert response.status_code == 200
     assert response.json() == [sensor1_out]
+
+    response = client.get("/api/sensors")
+    assert response.status_code == 200
+    assert response.json() == [sensor1_out]
+
+
+def test_modify_station_sensors(client, db_session, station_one, sensor_one, sensor_two):
+    station_in, station_out = station_one
+    sensor1_in, sensor1_out = sensor_one
+    sensor2_in, sensor2_out = sensor_two
+
+    client.post("/api/stations", json=station_in)
+    client.post("/api/stations/1/sensors", json=sensor1_in)
+
+    response = client.put("/api/stations/1/sensors", json=[sensor2_in])
+    assert response.status_code == 204
+
+    response = client.get("/api/stations/1/sensors")
+    assert response.status_code == 200
+    assert response.json() == [sensor2_out]
