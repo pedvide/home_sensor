@@ -89,7 +89,9 @@ def get_station_sensors(
 def get_station_sensor(
     db: Session, db_station: models.Station, db_sensor: models.Sensor
 ) -> models.Sensor:
-    return [sensor for sensor in db_station.sensors if sensor.id == db_sensor.id][0]
+    for sensor in db_station.sensors:
+        if sensor.id == db_sensor.id:
+            return sensor
 
 
 def add_station_sensor(db: Session, db_station: models.Station, db_sensor: models.Sensor) -> None:
