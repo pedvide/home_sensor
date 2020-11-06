@@ -89,12 +89,16 @@ def get_station_sensors(
 def get_station_sensor(
     db: Session, db_station: models.Station, db_sensor: models.Sensor
 ) -> models.Sensor:
-    return [sensor for sensor in db_station.sensors if sensor.id == db_sensor.id][0]
+    for sensor in db_station.sensors:
+        if sensor.id == db_sensor.id:
+            return sensor
 
 
 def add_station_sensor(db: Session, db_station: models.Station, db_sensor: models.Sensor) -> None:
     db_station.add_sensor(db_sensor)
     db.commit()
+    db.refresh(db_sensor)
+    return db_sensor
 
 
 def create_station_sensor(
@@ -134,7 +138,7 @@ def transform_measurement(db: Session, db_measurement: dict):
 
 def get_station_measurements(
     db: Session, db_influx: InfluxDBClient, station_id: int, offset: int = 0, limit: int = 10,
-) -> List[models.Measurement]:
+):
     db_measurements = db_influx.query(
         f"SELECT * FROM raw_data WHERE station_id='{station_id}' "
         f"ORDER BY time DESC LIMIT {limit} OFFSET {offset}",
@@ -152,7 +156,7 @@ def get_all_measurements(
     order: str = "timestamp",
     offset: int = 0,
     limit: int = 10,
-) -> List[models.Measurement]:
+):
     db_measurements = db_influx.query(
         f"SELECT * FROM raw_data ORDER BY time DESC LIMIT {limit} OFFSET {offset}", epoch="s",
     ).get_points()
@@ -166,7 +170,7 @@ def create_measurements(
     db_influx: InfluxDBClient,
     station_id: int,
     measurements: List[schemas.MeasurementCreate],
-) -> models.Measurement:
+):
     """Create measurements and send it to influxdb"""
     json_measurements = []
     response_measurements = []

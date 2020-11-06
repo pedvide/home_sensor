@@ -9,7 +9,7 @@ from influxdb import InfluxDBClient
 
 database_file = "sql_app.db"
 database_path = Path(".") / database_file
-SQLALCHEMY_DATABASE_URL = f"sqlite:///./{database_file}"
+SQLALCHEMY_DATABASE_URL = f"sqlite:///./{database_path}"
 # SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 
 engine = create_engine(
@@ -29,7 +29,9 @@ def get_db():
 
 def get_influx_db():
     try:
-        client = InfluxDBClient(host="localhost", port=8086, username="homesensor", password="")
+        client = InfluxDBClient(
+            host="influxdb", port=8086, username="homesensor", password="homesensor123"
+        )
         client.switch_database("home_sensor")
         yield client
     finally:
