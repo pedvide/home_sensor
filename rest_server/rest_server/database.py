@@ -8,8 +8,8 @@ from influxdb import InfluxDBClient
 
 
 database_file = "sql_app.db"
-database_path = Path(".") / database_file
-SQLALCHEMY_DATABASE_URL = f"sqlite:///./{database_path}"
+database_path = Path("/var/lib/home-sensor") / database_file
+SQLALCHEMY_DATABASE_URL = f"sqlite:///{database_path}"
 # SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 
 engine = create_engine(
