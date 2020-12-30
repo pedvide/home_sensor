@@ -42,7 +42,7 @@ docker run -d --name homesensor -p 80:8080 \
   --restart=always \
   -e MAX_WORKERS=1 \
   --net influxdb \
-  -v /home/pedvide/home-sensor/rest_server/sql_app.db:/app/sql_app.db \
+  -v /home/pedvide/services/home_sensor/rest_server/data:/var/lib/home-sensor \
   --user nobody \
   rest_server
 ```
