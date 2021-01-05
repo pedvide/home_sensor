@@ -20,7 +20,7 @@ from xprocess import ProcessStarter
 def influxdb_server(xprocess):
     class Starter(ProcessStarter):
         pattern = "Listening for signals"
-        args = ["influxd"]
+        args = ["influxd", "run", "-config", "/dev/null"]
 
     xprocess.ensure("influxd", Starter)
     yield
