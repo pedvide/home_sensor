@@ -193,6 +193,7 @@ def create_measurements(
             "tags": dict(
                 station_id=station_id,
                 station_location=station.location,
+                station_token=station.token,
                 magnitude_id=magnitude_id,
                 magnitude_name=magnitude.name,
                 sensor_id=sensor_id,
