@@ -4,7 +4,6 @@
 #include "ESPAsyncTCP.h"
 #include "ESPAsyncWebServer.h"
 
-#include <Adafruit_AM2320.h>
 #include <ezTime.h>
 #include <CircularBuffer.h>
 #include "Hash.h"
@@ -13,6 +12,10 @@
 
 #include "config.h"
 #include "logging.h"
+
+#ifdef HAS_AM2320
+#include <Adafruit_AM2320.h>
+#endif
 
 //// WiFi
 const char *ssid = STASSID;
@@ -64,11 +67,13 @@ SensorData sensor_data;
 CircularBuffer<SensorData, 255> sensor_buffer; // Keep some raw data
 uint8 num_measurement_errors = 0;
 
+#ifdef HAS_AM2320
 // AM2320 Sensor
 uint8_t am2320_sensor_id, am2320_temp_id, am2320_hum_id;
 const char *sensor_am2320_name = "AM2320";
 float temperature, humidity;
 Adafruit_AM2320 am2320 = Adafruit_AM2320();
+#endif
 
 //// Post request
 WiFiClient client;
@@ -178,6 +183,8 @@ bool setup_station()
   return true;
 }
 
+#ifdef HAS_AM2320
+
 bool setup_am2320_sensor_json(JsonObject &am2320_json)
 {
   am2320_json["name"] = sensor_am2320_name;
@@ -225,6 +232,8 @@ bool setup_am2320_sensor()
 
   return true;
 }
+
+#endif
 
 bool setup_sensors()
 {
@@ -327,6 +336,7 @@ void setup_server()
 }
 
 ////// Measurement functions
+#ifdef HAS_AM2320
 void measure_am2320_sensor()
 {
   log_println("Measuring AM2320...");
@@ -384,10 +394,13 @@ void measure_am2320_sensor()
     }
   }
 }
+#endif
 
 void measure_sensors()
 {
+#ifdef HAS_AM2320
   measure_am2320_sensor();
+#endif
 }
 
 ////// Send data functions
