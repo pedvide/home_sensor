@@ -6,20 +6,24 @@ from pathlib import Path
 
 from influxdb import InfluxDBClient
 
+from . import models
+
 
 database_file = "sql_app.db"
-database_path = Path(".") / database_file
-SQLALCHEMY_DATABASE_URL = f"sqlite:///./{database_path}"
+database_path = Path("/var/lib/home-sensor") / database_file
+SQLALCHEMY_DATABASE_URL = f"sqlite:///{database_path}"
 # SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}, echo=False
-)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 
 def get_db():
+    engine = create_engine(
+        SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}, echo=False
+    )
+
+    Base.metadata.create_all(bind=engine)
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     try:
         db = SessionLocal()
         yield db
