@@ -554,6 +554,9 @@ void measure_sensors() {
 #ifdef HAS_AM2320
   measure_am2320_sensor();
 #endif
+#ifdef HAS_CCS811
+  measure_ccs811_sensor();
+#endif
 }
 
 ////// Send data functions
