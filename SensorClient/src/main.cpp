@@ -275,7 +275,7 @@ bool parse_ccs811_sensor_json(JsonObject &sensor_json_response) {
   }
   log_printf(
       "  ccs811_sensor_id: %d, ccs811_eco2_id: %d, ccs811_etvoc_id: %d.\n",
-      am2320_sensor_id, am2320_temp_id, am2320_hum_id);
+      ccs811_sensor_id, ccs811_eco2_id, ccs811_etvoc_id);
 
   return true;
 }
