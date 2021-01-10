@@ -401,13 +401,16 @@ bool setup_sensors() {
   return true;
 }
 bool setup_internal_sensors() {
+  bool res = true;
 #ifdef HAS_AM2320
-  setup_am2320_sensor();
+  res = res && setup_am2320_sensor();
 #endif
 
 #ifdef HAS_CCS811
-  setup_ccs811_sensor();
+  res = res && setup_ccs811_sensor();
 #endif
+
+  return res;
 }
 
 void setup_web_server() {
