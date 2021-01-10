@@ -110,7 +110,7 @@ void connect_to_wifi() {
   Serial.println();
 
   while (WiFi.waitForConnectResult() != WL_CONNECTED) {
-    log_println("Fail connecting");
+    log_println("  Fail connecting");
     delay(5000);
     ESP.restart();
   }
@@ -121,23 +121,21 @@ void connect_to_wifi() {
              "</h2>\n<h3>Located in the " + location + ".</h3><br>");
 
   // Print ESP8266 Local IP Address
-  log_print("Connected!");
-  log_print("IP: ");
-  log_println(WiFi.localIP().toString());
-  log_print("MAC sha1: ");
-  log_println(mac_sha);
+  log_printf("  Connected! IP: %s, MAC sha1: %s.",
+             WiFi.localIP().toString().c_str(), mac_sha.c_str());
   WiFi.setAutoReconnect(true);
 }
 
 void connect_to_time() {
+  log_println("Connecting to time server");
   setDebug(ezDebugLevel_t::INFO);
   waitForSync();
   setInterval(60 * 60); // 1h in seconds
 
-  log_println("UTC: " + UTC.dateTime());
+  log_println("  UTC: " + UTC.dateTime());
 
   Amsterdam.setLocation("Europe/Amsterdam");
-  log_println("Amsterdam time: " + Amsterdam.dateTime());
+  log_println("  Amsterdam time: " + Amsterdam.dateTime());
 }
 
 bool setup_station() {
