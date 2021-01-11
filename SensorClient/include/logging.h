@@ -10,6 +10,20 @@ typedef struct {
 CircularBuffer<LogData, 35> log_buffer;
 LogData log_record;
 
+void log_header_printf(String &web_debug_info_header, const char *format, ...) {
+  char message[50];
+
+  va_list arg;
+  va_start(arg, format);
+  vsnprintf(message, sizeof(message), format, arg);
+  va_end(arg);
+
+  String str_message = String(message);
+  str_message.replace("\n", "");
+  web_debug_info_header +=
+      "<h4>" + UTC.dateTime() + " - " + str_message + "</h4><br>\n";
+}
+
 void log_printf(const char *format, ...) {
   LogData new_value{UTC.now()};
   va_list arg;

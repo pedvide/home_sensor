@@ -118,7 +118,7 @@ void connect_to_wifi() {
   mac_sha = sha1(WiFi.macAddress());
   web_debug_info_header =
       String("<h2>ESP8266 home-sensor " + mac_sha +
-             "</h2>\n<h3>Located in the " + location + ".</h3><br>");
+             "</h2>\n<h3>Located in the " + location + ".</h3><br>\n");
 
   // Print ESP8266 Local IP Address
   log_printf("  Connected! IP: %s, MAC sha1: %s.",
@@ -136,6 +136,10 @@ void connect_to_time() {
 
   Amsterdam.setLocation("Europe/Amsterdam");
   log_println("  Amsterdam time: " + Amsterdam.dateTime());
+  log_header_printf(
+      web_debug_info_header,
+      "Connection with the timeserver stablished, Amsterdam time: %s",
+      Amsterdam.dateTime().c_str());
 }
 
 bool setup_station() {
@@ -185,6 +189,8 @@ bool setup_station() {
   sensors_endpoint = String(stations_endpoint) + "/" + station_id + "/sensors";
 
   log_printf("  station_id: %d.\n", station_id);
+  log_header_printf(web_debug_info_header, "station_id: %d, POST code: %d.",
+                    station_id, post_httpCode);
 
   http.end();
   return true;
@@ -224,6 +230,10 @@ bool parse_am2320_sensor_json(JsonObject &sensor_json_response) {
   }
   log_printf("  am2320_sensor_id: %d, am2320_temp_id: %d, am2320_hum_id: %d.\n",
              am2320_sensor_id, am2320_temp_id, am2320_hum_id);
+  log_header_printf(
+      web_debug_info_header,
+      "AM2320 sensor_id: %d, temperature_id: %d, humidity_id: %d.",
+      am2320_sensor_id, am2320_temp_id, am2320_hum_id);
 
   return true;
 }
@@ -233,6 +243,7 @@ bool setup_am2320_sensor() {
   am2320.begin();
   delay(500);
   log_println("  Done!");
+  log_header_printf(web_debug_info_header, "AM2320 sensor setup.");
 
   return true;
 }
@@ -274,6 +285,9 @@ bool parse_ccs811_sensor_json(JsonObject &sensor_json_response) {
   log_printf(
       "  ccs811_sensor_id: %d, ccs811_eco2_id: %d, ccs811_etvoc_id: %d.\n",
       ccs811_sensor_id, ccs811_eco2_id, ccs811_etvoc_id);
+  log_header_printf(web_debug_info_header,
+                    "CCS811 sensor_id: %d, eCO2_id: %d, eTVOC_id: %d.",
+                    ccs811_sensor_id, ccs811_eco2_id, ccs811_etvoc_id);
 
   return true;
 }
@@ -290,6 +304,7 @@ bool setup_ccs811_sensor() {
   bool ok = ccs811.begin();
   if (!ok) {
     log_println("  CCS811 begin FAILED");
+    return false;
   }
 
   // Print CCS811 versions
@@ -301,10 +316,17 @@ bool setup_ccs811_sensor() {
   ok = ccs811.start(CCS811_MODE_1SEC);
   if (!ok) {
     log_println("  CCS811 start FAILED");
+    return false;
   }
 
   delay(500);
   log_println("  Done!");
+  log_header_printf(web_debug_info_header,
+                    "CCS811 setup. library version %d, hardware version: %X, "
+                    "bootloader version: "
+                    "%X, application version: %X.",
+                    CCS811_VERSION, ccs811.hardware_version(),
+                    ccs811.bootloader_version(), ccs811.application_version());
   return true;
 }
 
@@ -363,12 +385,16 @@ bool setup_sensors() {
   http.begin(client, server, port, sensors_endpoint);
   put_httpCode = http.PUT(sensors_data);
   log_printf("  PUT HTTP code: %d.\n", put_httpCode);
+  log_header_printf(web_debug_info_header, "setup sensors PUT HTTP code: %d",
+                    put_httpCode);
   switch (put_httpCode) {
   case HTTP_CODE_NO_CONTENT: // OK, GET sensors
     http.end();
     http.begin(client, server, port, sensors_endpoint);
     get_httpCode = http.GET();
     log_printf("  GET HTTP code: %d.\n", get_httpCode);
+    log_header_printf(web_debug_info_header, "setup sensors GET HTTP code: %d",
+                      get_httpCode);
     break;
   default:
     http.end();
@@ -424,7 +450,7 @@ void setup_web_server() {
         String message = String(log_record.message);
         message.replace("\n", "");
         web_debug_info +=
-            UTC.dateTime(log_record.epoch) + " - " + message + "<br>";
+            UTC.dateTime(log_record.epoch) + " - " + message + "<br>\n";
       }
     }
     request->send(200, "text/html",
