@@ -30,8 +30,8 @@ const char *password = STAPSK;
 AsyncWebServer web_server(80);
 String web_debug_info_header, web_debug_info;
 const char web_server_html_header[] PROGMEM = R"=====(
-<!DOCTYPE HTML><html>
-<head>
+<!DOCTYPE HTML>
+<html>
 	<head>
 			<title>ESP8266 Home Sensor Client</title>
 	</head>
