@@ -609,6 +609,9 @@ bool post_measurement(String &data, String endpoint) {
   }
 }
 
+#ifdef DONT_SEND_DATA
+void send_data() {}
+#else
 void send_data() {
   if (sensor_buffer.isEmpty()) {
     return;
@@ -646,6 +649,7 @@ void send_data() {
     log_println("  Data was not sent.");
   }
 }
+#endif
 
 void setup() {
   Serial.begin(115200);
