@@ -11,7 +11,7 @@ CircularBuffer<LogData, 35> log_buffer;
 LogData log_record;
 
 void log_header_printf(String &web_debug_info_header, const char *format, ...) {
-  char message[50];
+  char message[100];
 
   va_list arg;
   va_start(arg, format);
@@ -21,7 +21,7 @@ void log_header_printf(String &web_debug_info_header, const char *format, ...) {
   String str_message = String(message);
   str_message.replace("\n", "");
   web_debug_info_header +=
-      "<h4>" + UTC.dateTime() + " - " + str_message + "</h4><br>\n";
+      "<b>" + UTC.dateTime() + " - " + str_message + "</b><br>\n";
 }
 
 void log_printf(const char *format, ...) {

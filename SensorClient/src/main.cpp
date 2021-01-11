@@ -136,10 +136,8 @@ void connect_to_time() {
 
   Amsterdam.setLocation("Europe/Amsterdam");
   log_println("  Amsterdam time: " + Amsterdam.dateTime());
-  log_header_printf(
-      web_debug_info_header,
-      "Connection with the timeserver stablished, Amsterdam time: %s",
-      Amsterdam.dateTime().c_str());
+  log_header_printf(web_debug_info_header,
+                    "Connection with the timeserver stablished");
 }
 
 bool setup_station() {
@@ -322,9 +320,8 @@ bool setup_ccs811_sensor() {
   delay(500);
   log_println("  Done!");
   log_header_printf(web_debug_info_header,
-                    "CCS811 setup. library version %d, hardware version: %X, "
-                    "bootloader version: "
-                    "%X, application version: %X.",
+                    "CCS811 setup. lib v. %d, hw v.: 0x%X, "
+                    "bootldr v.: 0x%X, app v.: 0x%X.",
                     CCS811_VERSION, ccs811.hardware_version(),
                     ccs811.bootloader_version(), ccs811.application_version());
   return true;
@@ -455,7 +452,7 @@ void setup_web_server() {
     }
     request->send(200, "text/html",
                   String(web_server_html_header) + web_debug_info_header +
-                      web_debug_info + web_server_html_footer);
+                      "<hr>" + web_debug_info + web_server_html_footer);
   });
 
   web_server.onNotFound([](AsyncWebServerRequest *request) {
