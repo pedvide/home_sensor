@@ -63,9 +63,6 @@ uint8 num_sending_measurement_errors = 0;
 Timezone Amsterdam;
 
 ///// Common sensor
-const uint32_t sensor_period_s = 10;
-void measure_sensors();
-Ticker measurement_timer(measure_sensors, sensor_period_s * 1e3, 0, MILLIS);
 typedef struct {
   time_t epoch;
   uint8_t sensor_id;
@@ -81,6 +78,10 @@ uint8 num_measurement_errors = 0;
 uint8_t am2320_sensor_id, am2320_temp_id, am2320_hum_id;
 const char *sensor_am2320_name = "AM2320";
 Adafruit_AM2320 am2320 = Adafruit_AM2320();
+const uint32_t am2320_period_s = 10;
+void measure_am2320_sensor();
+Ticker am2320_measurement_timer(measure_am2320_sensor, am2320_period_s * 1e3, 0,
+                                MILLIS);
 #endif
 
 #ifdef HAS_CCS811
@@ -90,15 +91,19 @@ const char *sensor_ccs811_name = "CCS811";
 // Wiring for ESP8266 NodeMCU boards: VDD to 3V3, GND to GND, SDA to D2, SCL to
 // D1, nWAKE to D3 (or GND)
 CCS811 ccs811(D3); // nWAKE on D3
+const uint32_t ccs811_period_s = 10;
+void measure_ccs811_sensor();
+Ticker ccs811_measurement_timer(measure_ccs811_sensor, ccs811_period_s * 1e3, 0,
+                                MILLIS);
 #endif
 
 //// Post request
 WiFiClient client;
 HTTPClient http;
 String response;
-// Updates readings every x/2 seconds
+const uint32_t send_data_period_s = 5;
 void send_data();
-Ticker send_timer(send_data, int(sensor_period_s / 2) * 1e3, 0, MILLIS);
+Ticker send_timer(send_data, int(send_data_period_s) * 1e3, 0, MILLIS);
 
 ////// Setup functions
 
@@ -572,15 +577,6 @@ void measure_ccs811_sensor() {
 }
 #endif
 
-void measure_sensors() {
-#ifdef HAS_AM2320
-  measure_am2320_sensor();
-#endif
-#ifdef HAS_CCS811
-  measure_ccs811_sensor();
-#endif
-}
-
 ////// Send data functions
 bool post_measurement(String &data, String endpoint) {
   // Post Data
@@ -700,7 +696,12 @@ void setup() {
   }
 
   // Timer
-  measurement_timer.start();
+#ifdef HAS_AM2320
+  am2320_measurement_timer.start();
+#endif
+#ifdef HAS_CCS811
+  ccs811_measurement_timer.start();
+#endif
   send_timer.start();
 }
 
@@ -718,6 +719,11 @@ void loop() {
   }
 
   // Update timer
-  measurement_timer.update();
+#ifdef HAS_AM2320
+  am2320_measurement_timer.update();
+#endif
+#ifdef HAS_CCS811
+  ccs811_measurement_timer.update();
+#endif
   send_timer.update();
 }
