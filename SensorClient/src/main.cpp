@@ -8,6 +8,7 @@
 #include <ArduinoJson.h>
 #include <CircularBuffer.h>
 #include <Ticker.h>
+#include <Wire.h> // I2C library
 #include <ezTime.h>
 
 #include "config.h"
@@ -19,7 +20,7 @@
 
 #ifdef HAS_CCS811
 #include "ccs811.h" // CCS811 library
-#include <Wire.h>   // I2C library
+#endif
 #endif
 
 //// WiFi
@@ -292,9 +293,6 @@ bool parse_ccs811_sensor_json(JsonObject &sensor_json_response) {
 
 bool setup_ccs811_sensor() {
   log_printf("Setting up CCS811 sensor (version %d)...\n", CCS811_VERSION);
-
-  // Enable I2C
-  Wire.begin();
 
   // Enable CCS811
   ccs811.set_i2cdelay(50); // Needed for ESP8266 because it doesn't handle I2C
@@ -653,6 +651,8 @@ void send_data() {
 
 void setup() {
   Serial.begin(115200);
+
+  Wire.begin();
 
   connect_to_wifi();
 
