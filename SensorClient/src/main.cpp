@@ -661,6 +661,8 @@ void setup() {
   setup_web_server();
 
   uint8_t num_tries = 0;
+
+#ifndef DONT_SEND_DATA
   while (!setup_station()) {
     if (num_tries < 100) {
       delay(1000);
@@ -681,6 +683,7 @@ void setup() {
       ESP.restart();
     }
   }
+#endif
 
   num_tries = 0;
   while (!setup_internal_sensors()) {
