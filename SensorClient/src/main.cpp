@@ -157,7 +157,9 @@ void connect_to_time() {
   Amsterdam.setLocation("Europe/Amsterdam");
   log_println("  Amsterdam time: " + Amsterdam.dateTime());
   log_header_printf(web_debug_info_header,
-                    "Connection with the timeserver stablished");
+                    "Connection stablished with the time server.");
+  log_header_printf(web_debug_info_header, "Amsterdam time: %s.",
+                    Amsterdam.dateTime().c_str());
 }
 
 bool setup_station() {
@@ -396,6 +398,11 @@ bool setup_hdc1080_sensor() {
   hdc1080.begin(0x40);
   hdc1080.setResolution(HDC1080_RESOLUTION_14BIT, HDC1080_RESOLUTION_14BIT);
 
+  if (hdc1080.readManufacturerId() == 0xFFFF) {
+    log_println("  Communication error!");
+    return false;
+  }
+
   // Print HDC1080 versions
   log_printf("  Manufacturer ID: 0x%X\n", hdc1080.readManufacturerId());
   log_printf("  Device ID: 0x%X\n", hdc1080.readDeviceId());
@@ -407,7 +414,7 @@ bool setup_hdc1080_sensor() {
   log_println("  Done!");
   log_header_printf(web_debug_info_header,
                     "HDC1080 manufacturer ID v. 0x%X, dev ID: 0x%X, "
-                    "Serial no.: %02X-%04X-%04X.",
+                    "serial no.: %02X-%04X-%04X.",
                     hdc1080.readManufacturerId(), hdc1080.readDeviceId(),
                     sernum.serialFirst, sernum.serialMid, sernum.serialLast);
   return true;
@@ -680,6 +687,10 @@ void measure_hdc1080_sensor() {
   if (isnan(humidity)) {
     log_println("  Error reading humidity.");
     num_measurement_errors++;
+  } else if ((temperature > 120) && (humidity > 99.99)) {
+    log_printf("  Error reading values (%.2f, %.2f).\n", humidity, temperature);
+    num_measurement_errors++;
+    return;
   } else {
     SensorData humidity_data = {now, hdc1080_sensor_id, hdc1080_hum_id};
     conversion_ret_val = snprintf(
@@ -698,9 +709,6 @@ void measure_hdc1080_sensor() {
 
   if (isnan(temperature)) {
     log_println("  Error reading temperature.");
-    num_measurement_errors++;
-  } else if (temperature > 120) {
-    log_printf("  Error reading temperature (%.2f)\n.", temperature);
     num_measurement_errors++;
   } else {
     SensorData temperature_data = {now, hdc1080_sensor_id, hdc1080_temp_id};
