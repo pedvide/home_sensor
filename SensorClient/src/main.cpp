@@ -21,6 +21,9 @@
 #ifdef HAS_CCS811
 #include "ccs811.h" // CCS811 library
 #endif
+
+#ifdef HAS_HDC1080
+#include "ClosedCube_HDC1080.h" // HDC1080 library
 #endif
 
 //// WiFi
