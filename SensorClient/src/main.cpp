@@ -316,7 +316,7 @@ bool setup_ccs811_sensor() {
   log_printf("Setting up CCS811 sensor (version %d)...\n", CCS811_VERSION);
 
   // Enable CCS811
-  ccs811.set_i2cdelay(50); // Needed for ESP8266 because it doesn't handle I2C
+  ccs811.set_i2cdelay(20); // Needed for ESP8266 because it doesn't handle I2C
                            // clock stretch correctly
   bool ok = ccs811.begin();
   if (!ok) {
@@ -330,7 +330,7 @@ bool setup_ccs811_sensor() {
   log_printf("  application version: %X\n", ccs811.application_version());
 
   // Start measuring
-  ok = ccs811.start(CCS811_MODE_1SEC);
+  ok = ccs811.start(CCS811_MODE_10SEC);
   if (!ok) {
     log_println("  CCS811 start FAILED");
     return false;
@@ -525,12 +525,12 @@ bool setup_internal_sensors() {
   res = res && setup_am2320_sensor();
 #endif
 
-#ifdef HAS_CCS811
-  res = res && setup_ccs811_sensor();
-#endif
-
 #ifdef HAS_HDC1080
   res = res && setup_hdc1080_sensor();
+#endif
+
+#ifdef HAS_CCS811
+  res = res && setup_ccs811_sensor();
 #endif
 
   return res;
