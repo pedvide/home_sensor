@@ -15,7 +15,7 @@
 #include "logging.h"
 
 #ifdef HAS_AM2320
-#include <Adafruit_AM2320.h>
+#include <AM232X.h>
 #endif
 
 #ifdef HAS_CCS811
@@ -77,7 +77,7 @@ uint8 num_measurement_errors = 0;
 // AM2320 Sensor
 uint8_t am2320_sensor_id, am2320_temp_id, am2320_hum_id;
 const char *sensor_am2320_name = "AM2320";
-Adafruit_AM2320 am2320 = Adafruit_AM2320();
+AM232X am2320;
 const uint32_t am2320_period_s = 10;
 void measure_am2320_sensor();
 Ticker am2320_measurement_timer(measure_am2320_sensor, am2320_period_s * 1e3, 0,
@@ -260,10 +260,25 @@ bool parse_am2320_sensor_json(JsonObject &sensor_json_response) {
 
 bool setup_am2320_sensor() {
   log_println("Setting up AM2320 sensor...");
-  am2320.begin();
+  if (!am2320.begin()) {
+    delay(100);
+    if (!am2320.isConnected()) {
+      log_println("  AM2320 begin FAILED");
+      return false;
+    }
+  }
   delay(500);
-  log_println("  Done!");
-  log_header_printf(web_debug_info_header, "AM2320 sensor setup.");
+
+  log_printf("  Model: %d.\n"
+             "  Version: %d.\n"
+             "  Device ID: %d.\n"
+             "  Done!\n",
+             am2320.getModel(), am2320.getVersion(), am2320.getDeviceID());
+  log_header_printf(web_debug_info_header,
+                    "AM2320 setup. model: %d, "
+                    "version: %d, dev. id: %d.",
+                    am2320.getModel(), am2320.getVersion(),
+                    am2320.getDeviceID());
 
   return true;
 }
@@ -575,47 +590,44 @@ void measure_am2320_sensor() {
   time_t now = UTC.now();
   float temperature, humidity;
 
-  // sensor
-  humidity = am2320.readHumidity();
-  temperature = am2320.readTemperature();
-
-  if (isnan(humidity)) {
-    log_println("  Error reading humidity.");
+  int status = am2320.read();
+  if (status != AM232X_OK) {
+    log_printf("  Error reading AM2320 (%d).\n", status);
     num_measurement_errors++;
-  } else {
-    SensorData humidity_data = {now, am2320_sensor_id, am2320_hum_id};
-    conversion_ret_val = snprintf(
-        humidity_data.value, sizeof(humidity_data.value), "%.3f", humidity);
-    if (conversion_ret_val > 0) {
-      log_printf("  Humidity: %.2f %%.\n", humidity);
-      sensor_buffer.push(humidity_data);
-      if (num_measurement_errors > 0) {
-        num_measurement_errors--;
-      }
-    } else {
-      log_printf("  Problem converting humidity (%.2f %%) to char[].\n",
-                 humidity);
-    }
+    return;
   }
 
-  if (isnan(temperature)) {
-    log_println("  Error reading temperature.");
-    num_measurement_errors++;
-  } else {
-    SensorData temperature_data = {now, am2320_sensor_id, am2320_temp_id};
-    conversion_ret_val =
-        snprintf(temperature_data.value, sizeof(temperature_data.value), "%.3f",
-                 temperature);
-    if (conversion_ret_val > 0) {
-      log_printf("  Temperature: %.2f C.\n", temperature);
-      sensor_buffer.push(temperature_data);
-      if (num_measurement_errors > 0) {
-        num_measurement_errors--;
-      }
-    } else {
-      log_printf("  Problem converting temperature (%.2f C) to char[].\n",
-                 temperature);
+  // sensor
+  humidity = am2320.getHumidity();
+  temperature = am2320.getTemperature();
+
+  SensorData humidity_data = {now, am2320_sensor_id, am2320_hum_id};
+  conversion_ret_val = snprintf(humidity_data.value,
+                                sizeof(humidity_data.value), "%.3f", humidity);
+  if (conversion_ret_val > 0) {
+    log_printf("  Humidity: %.2f %%.\n", humidity);
+    sensor_buffer.push(humidity_data);
+    if (num_measurement_errors > 0) {
+      num_measurement_errors--;
     }
+  } else {
+    log_printf("  Problem converting humidity (%.2f %%) to char[].\n",
+               humidity);
+  }
+
+  SensorData temperature_data = {now, am2320_sensor_id, am2320_temp_id};
+  conversion_ret_val =
+      snprintf(temperature_data.value, sizeof(temperature_data.value), "%.3f",
+               temperature);
+  if (conversion_ret_val > 0) {
+    log_printf("  Temperature: %.2f C.\n", temperature);
+    sensor_buffer.push(temperature_data);
+    if (num_measurement_errors > 0) {
+      num_measurement_errors--;
+    }
+  } else {
+    log_printf("  Problem converting temperature (%.2f C) to char[].\n",
+               temperature);
   }
 }
 #endif
