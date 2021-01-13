@@ -155,7 +155,10 @@ void connect_to_wifi() {
 void connect_to_time() {
   log_println("Connecting to time server");
   setDebug(ezDebugLevel_t::INFO);
-  waitForSync();
+  if (!waitForSync(60)) {
+    Serial.println("  It took too long to update the time, restarting.");
+    ESP.restart();
+  }
   setInterval(60 * 60); // 1h in seconds
 
   log_println("  UTC: " + UTC.dateTime());
