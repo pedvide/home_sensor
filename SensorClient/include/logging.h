@@ -20,6 +20,7 @@ void log_header_printf(String &web_debug_info_header, const char *format, ...) {
 
   String str_message = String(message);
   str_message.replace("\n", "");
+  str_message.replace(" ", "&nbsp;");
   web_debug_info_header +=
       "<b>" + UTC.dateTime() + " - " + str_message + "</b><br>\n";
 }

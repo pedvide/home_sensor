@@ -136,13 +136,19 @@ void connect_to_wifi() {
   }
 
   mac_sha = sha1(WiFi.macAddress());
+  String hostname = WiFi.hostname();
+  hostname.toLowerCase();
   web_debug_info_header =
-      String("<h2>ESP8266 home-sensor " + mac_sha +
-             "</h2>\n<h3>Located in the " + location + ".</h3><br>\n");
+      String("<h2>ESP8266 <a href='http://" + hostname + "'>" + hostname +
+             "</a> home-sensor " + mac_sha + "</h2>\n<h3>Located in the " +
+             location + ".</h3>\n");
 
   // Print ESP8266 Local IP Address
   log_printf("  Connected! IP: %s, MAC sha1: %s.",
              WiFi.localIP().toString().c_str(), mac_sha.c_str());
+  log_header_printf(web_debug_info_header, "Connected! IP: %s, hostname: %s.",
+                    WiFi.localIP().toString().c_str(), WiFi.hostname().c_str());
+  log_header_printf(web_debug_info_header, "  MAC sha1: %s.", mac_sha.c_str());
   WiFi.setAutoReconnect(true);
 }
 
@@ -158,7 +164,7 @@ void connect_to_time() {
   log_println("  Amsterdam time: " + Amsterdam.dateTime());
   log_header_printf(web_debug_info_header,
                     "Connection stablished with the time server.");
-  log_header_printf(web_debug_info_header, "Amsterdam time: %s.",
+  log_header_printf(web_debug_info_header, "  Amsterdam time: %s.",
                     Amsterdam.dateTime().c_str());
 }
 
@@ -563,6 +569,8 @@ void setup_web_server() {
         log_record = log_buffer[i];
         String message = String(log_record.message);
         message.replace("\n", "");
+        message.replace(" ", "&nbsp;");
+
         web_debug_info +=
             UTC.dateTime(log_record.epoch) + " - " + message + "<br>\n";
       }
@@ -828,6 +836,7 @@ void setup() {
 #ifndef DONT_SEND_DATA
   while (!setup_station()) {
     if (num_tries < 100) {
+      log_println("Retrying to setup the station.");
       delay(1000);
       num_tries++;
     } else {
@@ -839,6 +848,7 @@ void setup() {
   num_tries = 0;
   while (!setup_sensors()) {
     if (num_tries < 100) {
+      log_println("Retrying to setup the sensors.");
       delay(1000);
       num_tries++;
     } else {
@@ -851,6 +861,7 @@ void setup() {
   num_tries = 0;
   while (!setup_internal_sensors()) {
     if (num_tries < 100) {
+      log_println("Retrying to setup the internal sensors.");
       delay(1000);
       num_tries++;
     } else {
