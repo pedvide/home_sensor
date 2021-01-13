@@ -89,8 +89,8 @@ Ticker am2320_measurement_timer(measure_am2320_sensor, am2320_period_s * 1e3, 0,
 uint8_t ccs811_sensor_id, ccs811_eco2_id, ccs811_etvoc_id;
 const char *sensor_ccs811_name = "CCS811";
 // Wiring for ESP8266 NodeMCU boards: VDD to 3V3, GND to GND, SDA to D2, SCL to
-// D1, nWAKE to D3 (or GND)
-CCS811 ccs811(D3); // nWAKE on D3
+// D1, nWAKE GND
+CCS811 ccs811;
 const uint32_t ccs811_period_s = 10;
 void measure_ccs811_sensor();
 Ticker ccs811_measurement_timer(measure_ccs811_sensor, ccs811_period_s * 1e3, 0,
