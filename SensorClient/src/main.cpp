@@ -32,7 +32,7 @@ const char *password = STAPSK;
 
 //// Web Server
 AsyncWebServer web_server(80);
-String web_debug_info_header, web_debug_info;
+String web_debug_info;
 const char web_server_html_header[] PROGMEM = R"=====(
 <!DOCTYPE HTML>
 <html>
@@ -146,9 +146,9 @@ void connect_to_wifi() {
   // Print ESP8266 Local IP Address
   log_printf("  Connected! IP: %s, MAC sha1: %s.",
              WiFi.localIP().toString().c_str(), mac_sha.c_str());
-  log_header_printf(web_debug_info_header, "Connected! IP: %s, hostname: %s.",
+  log_header_printf("Connected! IP: %s, hostname: %s.",
                     WiFi.localIP().toString().c_str(), WiFi.hostname().c_str());
-  log_header_printf(web_debug_info_header, "  MAC sha1: %s.", mac_sha.c_str());
+  log_header_printf("  MAC sha1: %s.", mac_sha.c_str());
   WiFi.setAutoReconnect(true);
 }
 
@@ -165,10 +165,8 @@ void connect_to_time() {
 
   Amsterdam.setLocation("Europe/Amsterdam");
   log_println("  Amsterdam time: " + Amsterdam.dateTime());
-  log_header_printf(web_debug_info_header,
-                    "Connection stablished with the time server.");
-  log_header_printf(web_debug_info_header, "  Amsterdam time: %s.",
-                    Amsterdam.dateTime().c_str());
+  log_header_printf("Connection stablished with the time server.");
+  log_header_printf("  Amsterdam time: %s.", Amsterdam.dateTime().c_str());
 }
 
 bool setup_station() {
@@ -218,8 +216,8 @@ bool setup_station() {
   sensors_endpoint = String(stations_endpoint) + "/" + station_id + "/sensors";
 
   log_printf("  station_id: %d.\n", station_id);
-  log_header_printf(web_debug_info_header, "station_id: %d, POST code: %d.",
-                    station_id, post_httpCode);
+  log_header_printf("station_id: %d, POST code: %d.", station_id,
+                    post_httpCode);
 
   http.end();
   return true;
@@ -227,7 +225,7 @@ bool setup_station() {
 
 #ifdef HAS_AM2320
 
-bool setup_am2320_sensor_json(JsonObject &sensor_json) {
+void setup_am2320_sensor_json(JsonObject &sensor_json) {
   sensor_json["name"] = sensor_am2320_name;
   JsonArray sensor_1_in_magnitudes =
       sensor_json.createNestedArray("magnitudes");
@@ -241,8 +239,6 @@ bool setup_am2320_sensor_json(JsonObject &sensor_json) {
   mag2_in["name"] = "humidity";
   mag2_in["unit"] = "%";
   mag2_in["precision"] = 0.1;
-
-  return true;
 }
 
 bool parse_am2320_sensor_json(JsonObject &sensor_json_response) {
@@ -260,7 +256,7 @@ bool parse_am2320_sensor_json(JsonObject &sensor_json_response) {
   log_printf("  am2320_sensor_id: %d, am2320_temp_id: %d, am2320_hum_id: %d.\n",
              am2320_sensor_id, am2320_temp_id, am2320_hum_id);
   log_header_printf(
-      web_debug_info_header,
+
       "AM2320 sensor_id: %d, temperature_id: %d, humidity_id: %d.",
       am2320_sensor_id, am2320_temp_id, am2320_hum_id);
 
@@ -283,8 +279,7 @@ bool setup_am2320_sensor() {
              "  Device ID: %d.\n"
              "  Done!\n",
              am2320.getModel(), am2320.getVersion(), am2320.getDeviceID());
-  log_header_printf(web_debug_info_header,
-                    "AM2320 setup. model: %d, "
+  log_header_printf("AM2320 setup. model: %d, "
                     "version: %d, dev. id: %d.",
                     am2320.getModel(), am2320.getVersion(),
                     am2320.getDeviceID());
@@ -296,7 +291,7 @@ bool setup_am2320_sensor() {
 
 #ifdef HAS_CCS811
 
-bool setup_ccs811_sensor_json(JsonObject &sensor_json) {
+void setup_ccs811_sensor_json(JsonObject &sensor_json) {
   sensor_json["name"] = sensor_ccs811_name;
   JsonArray sensor_1_in_magnitudes =
       sensor_json.createNestedArray("magnitudes");
@@ -310,8 +305,6 @@ bool setup_ccs811_sensor_json(JsonObject &sensor_json) {
   mag2_in["name"] = "etvoc";
   mag2_in["unit"] = "ppb";
   mag2_in["precision"] = 1;
-
-  return true;
 }
 
 bool parse_ccs811_sensor_json(JsonObject &sensor_json_response) {
@@ -329,8 +322,7 @@ bool parse_ccs811_sensor_json(JsonObject &sensor_json_response) {
   log_printf(
       "  ccs811_sensor_id: %d, ccs811_eco2_id: %d, ccs811_etvoc_id: %d.\n",
       ccs811_sensor_id, ccs811_eco2_id, ccs811_etvoc_id);
-  log_header_printf(web_debug_info_header,
-                    "CCS811 sensor_id: %d, eCO2_id: %d, eTVOC_id: %d.",
+  log_header_printf("CCS811 sensor_id: %d, eCO2_id: %d, eTVOC_id: %d.",
                     ccs811_sensor_id, ccs811_eco2_id, ccs811_etvoc_id);
 
   return true;
@@ -362,8 +354,7 @@ bool setup_ccs811_sensor() {
 
   delay(500);
   log_println("  Done!");
-  log_header_printf(web_debug_info_header,
-                    "CCS811 setup. lib v. %d, hw v.: 0x%X, "
+  log_header_printf("CCS811 setup. lib v. %d, hw v.: 0x%X, "
                     "bootldr v.: 0x%X, app v.: 0x%X.",
                     CCS811_VERSION, ccs811.hardware_version(),
                     ccs811.bootloader_version(), ccs811.application_version());
@@ -374,7 +365,7 @@ bool setup_ccs811_sensor() {
 
 #ifdef HAS_HDC1080
 
-bool setup_hdc1080_sensor_json(JsonObject &sensor_json) {
+void setup_hdc1080_sensor_json(JsonObject &sensor_json) {
   sensor_json["name"] = sensor_hdc1080_name;
   JsonArray sensor_1_in_magnitudes =
       sensor_json.createNestedArray("magnitudes");
@@ -388,8 +379,6 @@ bool setup_hdc1080_sensor_json(JsonObject &sensor_json) {
   mag2_in["name"] = "humidity";
   mag2_in["unit"] = "%";
   mag2_in["precision"] = 2;
-
-  return true;
 }
 
 bool parse_hdc1080_sensor_json(JsonObject &sensor_json_response) {
@@ -408,7 +397,7 @@ bool parse_hdc1080_sensor_json(JsonObject &sensor_json_response) {
       "  hdc1080_sensor_id: %d, hdc1080_temp_id: %d, hdc1080_hum_id: %d.\n",
       hdc1080_sensor_id, hdc1080_temp_id, hdc1080_hum_id);
   log_header_printf(
-      web_debug_info_header,
+
       "HDC1080 sensor_id: %d, temperature_id: %d, humidity_id: %d.",
       hdc1080_sensor_id, hdc1080_temp_id, hdc1080_hum_id);
 
@@ -436,8 +425,7 @@ bool setup_hdc1080_sensor() {
 
   delay(500);
   log_println("  Done!");
-  log_header_printf(web_debug_info_header,
-                    "HDC1080 manufacturer ID v. 0x%X, dev ID: 0x%X, "
+  log_header_printf("HDC1080 manufacturer ID v. 0x%X, dev ID: 0x%X, "
                     "serial no.: %02X-%04X-%04X.",
                     hdc1080.readManufacturerId(), hdc1080.readDeviceId(),
                     sernum.serialFirst, sernum.serialMid, sernum.serialLast);
@@ -499,16 +487,14 @@ bool setup_sensors() {
   http.begin(client, server, port, sensors_endpoint);
   put_httpCode = http.PUT(sensors_data);
   log_printf("  PUT HTTP code: %d.\n", put_httpCode);
-  log_header_printf(web_debug_info_header, "setup sensors PUT HTTP code: %d",
-                    put_httpCode);
+  log_header_printf("setup sensors PUT HTTP code: %d", put_httpCode);
   switch (put_httpCode) {
   case HTTP_CODE_NO_CONTENT: // OK, GET sensors
     http.end();
     http.begin(client, server, port, sensors_endpoint);
     get_httpCode = http.GET();
     log_printf("  GET HTTP code: %d.\n", get_httpCode);
-    log_header_printf(web_debug_info_header, "setup sensors GET HTTP code: %d",
-                      get_httpCode);
+    log_header_printf("setup sensors GET HTTP code: %d", get_httpCode);
     break;
   default:
     http.end();
@@ -569,7 +555,7 @@ void setup_web_server() {
       web_debug_info = "";
       using index_t = decltype(log_buffer)::index_t;
       for (index_t i = 0; i < log_buffer.size(); i++) {
-        log_record = log_buffer[i];
+        LogData log_record = log_buffer[i];
         String message = String(log_record.message);
         message.replace("\n", "");
         message.replace(" ", "&nbsp;");

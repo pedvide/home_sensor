@@ -1,6 +1,10 @@
+#pragma once
+
 #include "Arduino.h"
 #include <CircularBuffer.h>
 #include <ezTime.h>
+
+String web_debug_info_header;
 
 typedef struct {
   time_t epoch;
@@ -8,9 +12,8 @@ typedef struct {
 } LogData;
 
 CircularBuffer<LogData, 35> log_buffer;
-LogData log_record;
 
-void log_header_printf(String &web_debug_info_header, const char *format, ...) {
+void log_header_printf(const char *format, ...) {
   char message[100];
 
   va_list arg;
@@ -41,7 +44,7 @@ void log_print(const char *str) {
   Serial.print(new_value.message);
   log_buffer.push(new_value);
 }
-void log_print(const String str) { log_print(str.c_str()); }
+// void log_print(const String &str) { log_print(str.c_str()); }
 
 void log_println(const char *str) {
   LogData new_value{UTC.now()};
@@ -49,4 +52,4 @@ void log_println(const char *str) {
   Serial.println(new_value.message);
   log_buffer.push(new_value);
 }
-void log_println(const String str) { log_println(str.c_str()); }
+void log_println(const String &str) { log_println(str.c_str()); }
