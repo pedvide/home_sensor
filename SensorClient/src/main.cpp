@@ -350,7 +350,7 @@ Ticker ccs811_measurement_timer(measure_ccs811_sensor, ccs811_period_s * 1e3, 0,
 #ifdef HAS_HDC1080
 // HAS_HDC1080 Sensor
 uint8_t hdc1080_sensor_id, hdc1080_temp_id, hdc1080_hum_id;
-const char *sensor_hdc1080_name PROGMEM = "HDC080";
+const char *sensor_hdc1080_name PROGMEM = "HDC1080";
 ClosedCube_HDC1080 hdc1080;
 const uint32_t hdc1080_period_s = 10;
 const size_t capacity_hdc1080 =
@@ -439,20 +439,20 @@ void measure_hdc1080_sensor() {
     log_println("  Error reading humidity.");
     num_measurement_errors++;
   } else if (humidity > 99.99) {
-    log_printf("  Error reading humidity (%.2f).\n", humidity);
+    log_printf("  Error reading humidity (%.1f).\n", humidity);
     num_measurement_errors++;
   } else {
     SensorData humidity_data = {now, hdc1080_sensor_id, hdc1080_hum_id};
     conversion_ret_val = snprintf(
-        humidity_data.value, sizeof(humidity_data.value), "%.3f", humidity);
+        humidity_data.value, sizeof(humidity_data.value), "%.1f", humidity);
     if (conversion_ret_val > 0) {
-      log_printf("  Humidity: %.2f %%.\n", humidity);
+      log_printf("  Humidity: %.1f %%.\n", humidity);
       sensor_buffer.push(humidity_data);
       if (num_measurement_errors > 0) {
         num_measurement_errors--;
       }
     } else {
-      log_printf("  Problem converting humidity (%.2f %%) to char[].\n",
+      log_printf("  Problem converting humidity (%.1f %%) to char[].\n",
                  humidity);
     }
   }
@@ -466,7 +466,7 @@ void measure_hdc1080_sensor() {
   } else {
     SensorData temperature_data = {now, hdc1080_sensor_id, hdc1080_temp_id};
     conversion_ret_val =
-        snprintf(temperature_data.value, sizeof(temperature_data.value), "%.3f",
+        snprintf(temperature_data.value, sizeof(temperature_data.value), "%.2f",
                  temperature);
     if (conversion_ret_val > 0) {
       log_printf("  Temperature: %.2f C.\n", temperature);
