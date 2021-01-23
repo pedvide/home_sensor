@@ -122,6 +122,10 @@ bool parse_am2320_sensor_json(JsonObject &sensor_json_response) {
   return true;
 }
 
+#ifdef HAS_CCS811
+void correct_ccs811_envdata(float humidity, float temperature);
+#endif
+
 bool setup_am2320_sensor() {
   log_println("Setting up AM2320 sensor...");
   if (!am2320.begin()) {
@@ -191,6 +195,10 @@ void measure_am2320_sensor() {
     log_printf("  Problem converting temperature (%.2f C) to char[].\n",
                temperature);
   }
+
+#ifdef HAS_CCS811
+  correct_ccs811_envdata(humidity, temperature);
+#endif
 }
 
 Ticker am2320_measurement_timer(measure_am2320_sensor, am2320_period_s * 1e3, 0,
@@ -201,8 +209,6 @@ Ticker am2320_measurement_timer(measure_am2320_sensor, am2320_period_s * 1e3, 0,
 // CCS811 Sensor
 uint8_t ccs811_sensor_id, ccs811_eco2_id, ccs811_etvoc_id;
 const char *sensor_ccs811_name = "CCS811";
-// Wiring for ESP8266 NodeMCU boards: VDD to 3V3, GND to GND, SDA to D2, SCL to
-// D1, nWAKE GND
 CCS811 ccs811;
 const uint32_t ccs811_period_s = 10;
 const size_t capacity_ccs811 =
@@ -331,6 +337,12 @@ void measure_ccs811_sensor() {
   }
 }
 
+void correct_ccs811_envdata(float humidity, float temperature) {
+#ifdef HAS_CCS811
+  ccs811.set_envdata(((uint16_t)humidity + 250) / 500,
+                     ((uint16_t)temperature + 25250) / 500);
+#endif
+}
 Ticker ccs811_measurement_timer(measure_ccs811_sensor, ccs811_period_s * 1e3, 0,
                                 MILLIS);
 #endif
