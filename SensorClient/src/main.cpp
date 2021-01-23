@@ -426,7 +426,7 @@ void measure_hdc1080_sensor() {
   if (isnan(humidity)) {
     log_println("  Error reading humidity.");
     num_measurement_errors++;
-  } else if ((temperature > 120) && (humidity > 99.99)) {
+  } else if ((temperature > 120) || (humidity > 99.99)) {
     log_printf("  Error reading values (%.2f, %.2f).\n", humidity, temperature);
     num_measurement_errors++;
     return;
