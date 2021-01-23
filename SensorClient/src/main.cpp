@@ -426,10 +426,9 @@ void measure_hdc1080_sensor() {
   if (isnan(humidity)) {
     log_println("  Error reading humidity.");
     num_measurement_errors++;
-  } else if ((temperature > 120) || (humidity > 99.99)) {
-    log_printf("  Error reading values (%.2f, %.2f).\n", humidity, temperature);
+  } else if (humidity > 99.99) {
+    log_printf("  Error reading humidity (%.2f).\n", humidity);
     num_measurement_errors++;
-    return;
   } else {
     SensorData humidity_data = {now, hdc1080_sensor_id, hdc1080_hum_id};
     conversion_ret_val = snprintf(
@@ -448,6 +447,9 @@ void measure_hdc1080_sensor() {
 
   if (isnan(temperature)) {
     log_println("  Error reading temperature.");
+    num_measurement_errors++;
+  } else if (temperature > 120) {
+    log_printf("  Error reading temperature (%.2f).\n", temperature);
     num_measurement_errors++;
   } else {
     SensorData temperature_data = {now, hdc1080_sensor_id, hdc1080_temp_id};
