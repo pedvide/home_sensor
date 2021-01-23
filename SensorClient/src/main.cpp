@@ -27,8 +27,8 @@
 #endif
 
 //// WiFi
-const char *ssid = STASSID;
-const char *password = STAPSK;
+const char *ssid PROGMEM = STASSID;
+const char *password PROGMEM = STAPSK;
 
 //// Web Server
 AsyncWebServer web_server(80);
@@ -48,11 +48,11 @@ const char web_server_html_footer[] PROGMEM = R"=====(
 
 //// Station
 String mac_sha;
-const char *location = LOCATION;
+const char *location PROGMEM = LOCATION;
 
 //// rest server
-const char *server = SERVER_HOSTNAME;
-const char *stations_endpoint = "/api/stations";
+const char *server PROGMEM = SERVER_HOSTNAME;
+const char *stations_endpoint PROGMEM = "/api/stations";
 String station_endpoint, sensors_endpoint;
 uint8_t station_id;
 const uint8_t NUM_SENSORS = 3;
@@ -76,7 +76,7 @@ uint8 num_measurement_errors = 0;
 #ifdef HAS_AM2320
 // AM2320 Sensor
 uint8_t am2320_sensor_id, am2320_temp_id, am2320_hum_id;
-const char *sensor_am2320_name = "AM2320";
+const char *sensor_am2320_name PROGMEM = "AM2320";
 AM232X am2320;
 const uint32_t am2320_period_s = 10;
 const size_t capacity_am2320 =
@@ -208,7 +208,7 @@ Ticker am2320_measurement_timer(measure_am2320_sensor, am2320_period_s * 1e3, 0,
 #ifdef HAS_CCS811
 // CCS811 Sensor
 uint8_t ccs811_sensor_id, ccs811_eco2_id, ccs811_etvoc_id;
-const char *sensor_ccs811_name = "CCS811";
+const char *sensor_ccs811_name PROGMEM = "CCS811";
 CCS811 ccs811;
 const uint32_t ccs811_period_s = 10;
 const size_t capacity_ccs811 =
@@ -350,7 +350,7 @@ Ticker ccs811_measurement_timer(measure_ccs811_sensor, ccs811_period_s * 1e3, 0,
 #ifdef HAS_HDC1080
 // HAS_HDC1080 Sensor
 uint8_t hdc1080_sensor_id, hdc1080_temp_id, hdc1080_hum_id;
-const char *sensor_hdc1080_name = "HDC080";
+const char *sensor_hdc1080_name PROGMEM = "HDC080";
 ClosedCube_HDC1080 hdc1080;
 const uint32_t hdc1080_period_s = 10;
 const size_t capacity_hdc1080 =
@@ -497,7 +497,7 @@ Ticker send_timer(send_data, int(send_data_period_s) * 1e3, 0, MILLIS);
 
 void connect_to_wifi() {
   // Connect to Wi-Fi
-  log_println("Connecting to WiFi");
+  log_println(F("Connecting to WiFi"));
   WiFi.begin(ssid, password);
   WiFi.mode(WIFI_STA); // WiFi mode station (connect to wifi router only
   while (!WiFi.isConnected()) {
@@ -507,7 +507,7 @@ void connect_to_wifi() {
   Serial.println();
 
   while (WiFi.waitForConnectResult() != WL_CONNECTED) {
-    log_println("  Fail connecting");
+    log_println(F("  Fail connecting"));
     delay(5000);
     ESP.restart();
   }
@@ -515,34 +515,43 @@ void connect_to_wifi() {
   mac_sha = sha1(WiFi.macAddress());
   String hostname = WiFi.hostname();
   hostname.toLowerCase();
-  web_debug_info_header =
-      String("<h2>ESP8266 <a href='http://" + hostname + "'>" + hostname +
-             "</a> home-sensor " + mac_sha + "</h2>\n<h3>Located in the " +
-             location + ".</h3>\n");
+  char str[400];
+  snprintf(str, sizeof(str),
+           "<h2>ESP8266 <a href='http://%s'>%s</a> home-sensor.</h2>\n"
+           "<h3>Located in the %s.</h3>\n"
+           "<h3>chip ID: %x.</h3>\n",
+           hostname.c_str(), hostname.c_str(), location, ESP.getChipId());
+  web_debug_info_header = String(str);
+
+  log_header_printf("CPU freq: %d MHz, Sketch size: %d kB (free: %d kB), "
+                    "Flash size: %d kB.",
+                    ESP.getCpuFreqMHz(), ESP.getSketchSize() / 1024,
+                    ESP.getFreeSketchSpace() / 1024,
+                    ESP.getFlashChipRealSize() / 1024);
 
   // Print ESP8266 Local IP Address
-  log_printf("  Connected! IP: %s, MAC sha1: %s.",
+  log_printf("  Connected! IP: %s, MAC sha1: %s.\n",
              WiFi.localIP().toString().c_str(), mac_sha.c_str());
   log_header_printf("Connected! IP: %s, hostname: %s.",
-                    WiFi.localIP().toString().c_str(), WiFi.hostname().c_str());
+                    WiFi.localIP().toString().c_str(), hostname.c_str());
   log_header_printf("  MAC sha1: %s.", mac_sha.c_str());
   WiFi.setAutoReconnect(true);
 }
 
 void connect_to_time() {
-  log_println("Connecting to time server");
+  log_println(F("Connecting to time server"));
   setDebug(ezDebugLevel_t::INFO);
   if (!waitForSync(60)) {
-    Serial.println("  It took too long to update the time, restarting.");
+    Serial.println(F("  It took too long to update the time, restarting."));
     ESP.restart();
   }
   setInterval(60 * 60); // 1h in seconds
 
   log_println("  UTC: " + UTC.dateTime());
 
-  Amsterdam.setLocation("Europe/Amsterdam");
+  Amsterdam.setLocation(F("Europe/Amsterdam"));
   log_println("  Amsterdam time: " + Amsterdam.dateTime());
-  log_header_printf("Connection stablished with the time server.");
+  log_header_printf("Connection stablished with the time server.\n");
   log_header_printf("  Amsterdam time: %s.", Amsterdam.dateTime().c_str());
 }
 
@@ -716,7 +725,7 @@ bool setup_internal_sensors() {
 }
 
 void setup_web_server() {
-  log_println("setup_server");
+  log_println(F("setup_server"));
 
   // Web server
   web_server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -733,9 +742,20 @@ void setup_web_server() {
             UTC.dateTime(log_record.epoch) + " - " + message + "<br>\n";
       }
     }
+    uint32_t hfree = 0;
+    uint16_t hmax = 0;
+    uint8_t hfrag = 0;
+    ESP.getHeapStats(&hfree, &hmax, &hfrag);
+    char extra_debug_header[200];
+    snprintf(extra_debug_header, sizeof(extra_debug_header),
+             "<b>%s - RAM: free = %d kB, largest contiguous = %d kB "
+             "(fragmentation: %d%%).</b><br>\n",
+             UTC.dateTime().c_str(), hfree / 1024, hmax / 1024, hfrag);
+
     request->send(200, "text/html",
                   String(web_server_html_header) + web_debug_info_header +
-                      "<hr>" + web_debug_info + web_server_html_footer);
+                      extra_debug_header + "<hr>" + web_debug_info +
+                      web_server_html_footer);
   });
 
   web_server.onNotFound([](AsyncWebServerRequest *request) {
@@ -768,10 +788,8 @@ bool post_measurement(String &data, String endpoint) {
     }
     return true;
   default:
-    log_printf(("  post_measurement HTTP Error code (%d): " +
-                http.errorToString(httpCode))
-                   .c_str(),
-               httpCode);
+    log_printf("  post_measurement HTTP Error code (%d): %s.", httpCode,
+               http.errorToString(httpCode).c_str());
     num_sending_measurement_errors++;
     return false;
   }
@@ -811,10 +829,10 @@ void send_data() {
       post_measurement(post_data, station_endpoint + "/measurements");
 
   if (success) {
-    log_println("  Data sent successfully.");
+    log_println(F("  Data sent successfully."));
     sensor_buffer.clear();
   } else {
-    log_println("  Data was not sent.");
+    log_println(F("  Data was not sent."));
   }
 }
 #endif
@@ -835,11 +853,11 @@ void setup() {
 #ifndef DONT_SEND_DATA
   while (!setup_station()) {
     if (num_tries < 100) {
-      log_println("Retrying to setup the station.");
+      log_println(F("Retrying to setup the station."));
       delay(1000);
       num_tries++;
     } else {
-      Serial.println("Too many retries to setup_station: restarting.");
+      Serial.println(F("Too many retries to setup_station: restarting."));
       ESP.restart();
     }
   }
@@ -847,11 +865,11 @@ void setup() {
   num_tries = 0;
   while (!setup_sensors()) {
     if (num_tries < 100) {
-      log_println("Retrying to setup the sensors.");
+      log_println(F("Retrying to setup the sensors."));
       delay(1000);
       num_tries++;
     } else {
-      Serial.println("Too many retries to setup_sensors: restarting.");
+      Serial.println(F("Too many retries to setup_sensors: restarting."));
       ESP.restart();
     }
   }
@@ -860,11 +878,12 @@ void setup() {
   num_tries = 0;
   while (!setup_internal_sensors()) {
     if (num_tries < 100) {
-      log_println("Retrying to setup the internal sensors.");
+      log_println(F("Retrying to setup the internal sensors."));
       delay(1000);
       num_tries++;
     } else {
-      Serial.println("Too many retries to setup_internal_sensors: restarting.");
+      Serial.println(
+          F("Too many retries to setup_internal_sensors: restarting."));
       ESP.restart();
     }
   }
@@ -887,11 +906,11 @@ void loop() {
   events();
 
   if (num_measurement_errors > 100) {
-    Serial.println("Too many measurement errors: restarting.");
+    Serial.println(F("Too many measurement errors: restarting."));
     ESP.restart();
   }
   if (num_sending_measurement_errors > 100) {
-    Serial.println("Too many errors sending measurements: restarting.");
+    Serial.println(F("Too many errors sending measurements: restarting."));
     ESP.restart();
   }
 

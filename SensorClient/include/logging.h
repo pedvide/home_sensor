@@ -8,18 +8,29 @@ String web_debug_info_header;
 
 typedef struct {
   time_t epoch;
-  char message[75];
+  char message[100];
 } LogData;
 
-CircularBuffer<LogData, 35> log_buffer;
+CircularBuffer<LogData, 20> log_buffer;
 
 void log_header_printf(const char *format, ...) {
-  char message[100];
+  char message[100] = "";
 
   va_list arg;
   va_start(arg, format);
   vsnprintf(message, sizeof(message), format, arg);
   va_end(arg);
+
+  String str_message = String(message);
+  str_message.replace("\n", "");
+  str_message.replace(" ", "&nbsp;");
+  web_debug_info_header +=
+      "<b>" + UTC.dateTime() + " - " + str_message + "</b><br>\n";
+}
+
+void log_header_print(const char *str) {
+  char message[100] = "";
+  snprintf(message, sizeof(message), str);
 
   String str_message = String(message);
   str_message.replace("\n", "");
