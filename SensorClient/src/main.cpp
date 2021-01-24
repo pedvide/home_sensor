@@ -32,8 +32,7 @@ const char *password PROGMEM = STAPSK;
 
 //// Web Server
 AsyncWebServer web_server(80);
-String web_debug_info;
-const char web_server_html_header[] PROGMEM = R"=====(
+bool requested_restart = false;
 <!DOCTYPE HTML>
 <html>
 	<head>
@@ -757,10 +756,9 @@ void setup_web_server() {
     request->send(response);
   });
 
-    request->send(200, "text/html",
-                  String(web_server_html_header) + web_debug_info_header +
-                      extra_debug_header + "<hr>" + web_debug_info +
-                      web_server_html_footer);
+  web_server.on("/restart", HTTP_GET, [](AsyncWebServerRequest *request) {
+    requested_restart = true;
+    request->redirect("/");
   });
 
   web_server.onNotFound([](AsyncWebServerRequest *request) {
@@ -909,6 +907,11 @@ void setup() {
 void loop() {
   // Update time if needed
   events();
+
+  if (requested_restart) {
+    delay(10);
+    ESP.restart();
+  }
 
   if (num_measurement_errors > 100) {
     Serial.println(F("Too many measurement errors: restarting."));
