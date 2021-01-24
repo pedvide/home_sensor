@@ -44,6 +44,7 @@ const char web_server_html_footer[] PROGMEM = R"=====(
 </body>
 </html>
 )=====";
+char web_static_info_header[400];
 
 //// Station
 String mac_sha;
@@ -514,13 +515,11 @@ void connect_to_wifi() {
   mac_sha = sha1(WiFi.macAddress());
   String hostname = WiFi.hostname();
   hostname.toLowerCase();
-  char str[400];
-  snprintf(str, sizeof(str),
+  snprintf(web_static_info_header, sizeof(web_static_info_header),
            "<h2>ESP8266 <a href='http://%s'>%s</a> home-sensor.</h2>\n"
            "<h3>Located in the %s.</h3>\n"
-           "<h3>chip ID: %x.</h3>\n",
-           hostname.c_str(), hostname.c_str(), location, ESP.getChipId());
-  web_debug_info_header = String(str);
+           "<h3><a href='http://%s/restart'>Restart.</a></h3>\n",
+           hostname.c_str(), hostname.c_str(), location, hostname.c_str());
 
   log_header_printf("CPU freq: %d MHz, Sketch size: %d kB (free: %d kB), "
                     "Flash size: %d kB.",
