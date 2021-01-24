@@ -34,6 +34,7 @@ const char *password PROGMEM = STAPSK;
 //// Web Server
 AsyncWebServer web_server(80);
 bool requested_restart = false;
+const char web_server_html_header[] = R"=====(
 <!DOCTYPE HTML>
 <html>
 	<head>
@@ -41,7 +42,7 @@ bool requested_restart = false;
 	</head>
 <body>
 )=====";
-const char web_server_html_footer[] PROGMEM = R"=====(
+const char web_server_html_footer[] = R"=====(
 </body>
 </html>
 )=====";
@@ -116,7 +117,6 @@ bool parse_am2320_sensor_json(JsonObject &sensor_json_response) {
   log_printf("  am2320_sensor_id: %d, am2320_temp_id: %d, am2320_hum_id: %d.\n",
              am2320_sensor_id, am2320_temp_id, am2320_hum_id);
   log_header_printf(
-
       "AM2320 sensor_id: %d, temperature_id: %d, humidity_id: %d.",
       am2320_sensor_id, am2320_temp_id, am2320_hum_id);
 
@@ -531,9 +531,10 @@ void connect_to_wifi() {
   // Print ESP8266 Local IP Address
   log_printf("  Connected! IP: %s, MAC sha1: %s.\n",
              WiFi.localIP().toString().c_str(), mac_sha.c_str());
-  log_header_printf("Connected! IP: %s, hostname: %s.",
-                    WiFi.localIP().toString().c_str(), hostname.c_str());
-  log_header_printf("  MAC sha1: %s.", mac_sha.c_str());
+  log_header_printf("IP: %s, hostname: %s, chip ID: %x.",
+                    WiFi.localIP().toString().c_str(), hostname.c_str(),
+                    ESP.getChipId());
+  log_header_printf("&nbsp;&nbsp;MAC sha1: %s.", mac_sha.c_str());
   WiFi.setAutoReconnect(true);
 }
 
@@ -578,7 +579,8 @@ void connect_to_time() {
   Amsterdam.setLocation(F("Europe/Amsterdam"));
   log_println("  Amsterdam time: " + Amsterdam.dateTime());
   log_header_printf("Connection stablished with the time server.\n");
-  log_header_printf("  Amsterdam time: %s.", Amsterdam.dateTime().c_str());
+  log_header_printf("&nbsp;&nbsp;Amsterdam time: %s.",
+                    Amsterdam.dateTime().c_str());
 }
 
 bool setup_station() {
@@ -628,8 +630,9 @@ bool setup_station() {
   sensors_endpoint = String(stations_endpoint) + "/" + station_id + "/sensors";
 
   log_printf("  station_id: %d.\n", station_id);
-  log_header_printf("station_id: %d, POST code: %d.", station_id,
-                    post_httpCode);
+  log_header_printf(
+      "Connected to server at %s%s, station_id: %d (POST code: %d).", server,
+      stations_endpoint, station_id, post_httpCode);
 
   http.end();
   return true;
@@ -690,14 +693,14 @@ bool setup_sensors() {
   http.begin(client, server, port, sensors_endpoint);
   put_httpCode = http.PUT(sensors_data);
   log_printf("  PUT HTTP code: %d.\n", put_httpCode);
-  log_header_printf("setup sensors PUT HTTP code: %d", put_httpCode);
+  log_header_printf("Connected to server at %s%s, setup sensors: PUT code: %d.",
+                    server, sensors_endpoint.c_str(), put_httpCode);
   switch (put_httpCode) {
   case HTTP_CODE_NO_CONTENT: // OK, GET sensors
     http.end();
     http.begin(client, server, port, sensors_endpoint);
     get_httpCode = http.GET();
     log_printf("  GET HTTP code: %d.\n", get_httpCode);
-    log_header_printf("setup sensors GET HTTP code: %d", get_httpCode);
     break;
   default:
     http.end();
