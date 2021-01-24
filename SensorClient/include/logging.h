@@ -4,39 +4,21 @@
 #include <CircularBuffer.h>
 #include <ezTime.h>
 
-String web_debug_info_header;
-
 typedef struct {
   time_t epoch;
-  char message[100];
+  char message[120];
 } LogData;
 
 CircularBuffer<LogData, 20> log_buffer;
+CircularBuffer<LogData, 15> log_header_buffer;
 
 void log_header_printf(const char *format, ...) {
-  char message[100] = "";
-
+  LogData new_value{UTC.now()};
   va_list arg;
   va_start(arg, format);
-  vsnprintf(message, sizeof(message), format, arg);
+  vsnprintf(new_value.message, sizeof(new_value.message), format, arg);
   va_end(arg);
-
-  String str_message = String(message);
-  str_message.replace("\n", "");
-  str_message.replace(" ", "&nbsp;");
-  web_debug_info_header +=
-      "<b>" + UTC.dateTime() + " - " + str_message + "</b><br>\n";
-}
-
-void log_header_print(const char *str) {
-  char message[100] = "";
-  snprintf(message, sizeof(message), str);
-
-  String str_message = String(message);
-  str_message.replace("\n", "");
-  str_message.replace(" ", "&nbsp;");
-  web_debug_info_header +=
-      "<b>" + UTC.dateTime() + " - " + str_message + "</b><br>\n";
+  log_header_buffer.push(new_value);
 }
 
 void log_printf(const char *format, ...) {

@@ -729,28 +729,33 @@ void setup_web_server() {
 
   // Web server
   web_server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-    if (!log_buffer.isEmpty()) {
-      web_debug_info = "";
-      using index_t = decltype(log_buffer)::index_t;
-      for (index_t i = 0; i < log_buffer.size(); i++) {
-        LogData log_record = log_buffer[i];
-        String message = String(log_record.message);
-        message.replace("\n", "");
-        message.replace(" ", "&nbsp;");
+    AsyncResponseStream *response = request->beginResponseStream("text/html");
+    response->println(web_server_html_header);
+    response->println(web_static_info_header);
 
-        web_debug_info +=
-            UTC.dateTime(log_record.epoch) + " - " + message + "<br>\n";
+    if (!log_header_buffer.isEmpty()) {
+      using index_t = decltype(log_header_buffer)::index_t;
+      for (index_t i = 0; i < log_header_buffer.size(); i++) {
+        response->printf("<b>%s - %s</b><br>\n",
+                         UTC.dateTime(log_header_buffer[i].epoch).c_str(),
+                         log_header_buffer[i].message);
       }
     }
-    uint32_t hfree = 0;
-    uint16_t hmax = 0;
-    uint8_t hfrag = 0;
-    ESP.getHeapStats(&hfree, &hmax, &hfrag);
-    char extra_debug_header[200];
-    snprintf(extra_debug_header, sizeof(extra_debug_header),
-             "<b>%s - RAM: free = %d kB, largest contiguous = %d kB "
-             "(fragmentation: %d%%).</b><br>\n",
-             UTC.dateTime().c_str(), hfree / 1024, hmax / 1024, hfrag);
+
+    response->println("<hr>");
+
+    if (!log_buffer.isEmpty()) {
+      using index_t = decltype(log_buffer)::index_t;
+      for (index_t i = 0; i < log_buffer.size(); i++) {
+        response->printf("%s - %s<br>\n",
+                         UTC.dateTime(log_buffer[i].epoch).c_str(),
+                         log_buffer[i].message);
+      }
+    }
+
+    response->println(web_server_html_footer);
+    request->send(response);
+  });
 
     request->send(200, "text/html",
                   String(web_server_html_header) + web_debug_info_header +
