@@ -786,9 +786,11 @@ void setup_web_server() {
     if (!log_buffer.isEmpty()) {
       using index_t = decltype(log_buffer)::index_t;
       for (index_t i = 0; i < log_buffer.size(); i++) {
+        String msg = String(log_buffer[i].message);
+        msg.replace("  ", "&nbsp;&nbsp;");
         response->printf("%s - %s<br>\n",
                          UTC.dateTime(log_buffer[i].epoch).c_str(),
-                         log_buffer[i].message);
+                         msg.c_str());
       }
     }
 
