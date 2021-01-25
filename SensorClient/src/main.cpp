@@ -540,21 +540,18 @@ void connect_to_wifi() {
 }
 
 void setup_OTA() {
-  pinMode(LED_BUILTIN, OUTPUT);
+  ArduinoOTA.onStart([]() { log_println(F("Starting the OTA update.")); });
 
-  ArduinoOTA.onStart([]() {
-    digitalWrite(LED_BUILTIN, HIGH);
-    log_println(F("Starting OTA update."));
-  });
-
-  ArduinoOTA.onEnd([]() {
-    digitalWrite(LED_BUILTIN, LOW);
-    log_println(F("Finish OTA update."));
-  });
+  ArduinoOTA.onEnd([]() { log_println(F("Finished the OTA update.")); });
 
   ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
-    log_printf("OTA progress: %u%%.\n", (progress / (total / 100)));
+    static uint8_t last_perc_progress = 0;
+    uint8_t perc_progress = (progress / (total / 100));
+    if (((perc_progress % 5) == 0) && (perc_progress > last_perc_progress)) {
+      digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+      log_printf("OTA progress: %u%%.\n", perc_progress);
+      last_perc_progress = perc_progress;
+    }
   });
 
   ArduinoOTA.onError([](ota_error_t error) {
@@ -916,6 +913,8 @@ void setup() {
 
   Wire.begin();
 
+  pinMode(LED_BUILTIN, OUTPUT);
+
   connect_to_wifi();
 
   setup_OTA();
@@ -942,6 +941,8 @@ void setup() {
   hdc1080_measurement_timer.start();
 #endif
   send_timer.start();
+
+  digitalWrite(LED_BUILTIN, HIGH); // LED pin is active low
 }
 
 void loop() {
