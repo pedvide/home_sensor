@@ -811,14 +811,14 @@ void setup_web_server() {
   log_println("  done.");
 }
 
-void log_heap_ram_usage() {
+void log_heap_stack_usage() {
   uint32_t hfree = 0;
   uint16_t hmax = 0;
   uint8_t hfrag = 0;
   ESP.getHeapStats(&hfree, &hmax, &hfrag);
-  log_printf("RAM: free = %d kB, largest contiguous = %d kB "
-             "(fragmentation: %d%%).\n",
-             hfree / 1024, hmax / 1024, hfrag);
+  log_printf("Free RAM: %d kB, largest contiguous: %d kB "
+             "(fragmentation: %d%%). Free contiguous stack: %d kB.\n",
+             hfree / 1024, hmax / 1024, hfrag, ESP.getFreeContStack() / 1024);
 }
 
 ////// Send data functions
@@ -853,7 +853,7 @@ void send_data() {}
 #else
 void send_data() {
 
-  log_heap_ram_usage();
+  log_heap_stack_usage();
 
   if (sensor_buffer.isEmpty()) {
     return;
