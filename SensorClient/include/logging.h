@@ -13,7 +13,7 @@ CircularBuffer<LogData, 20> log_buffer;
 CircularBuffer<LogData, 15> log_header_buffer;
 
 void log_header_printf(const char *format, ...) {
-  LogData new_value{UTC.now()};
+  LogData new_value{defaultTZ->now()};
   va_list arg;
   va_start(arg, format);
   vsnprintf(new_value.message, sizeof(new_value.message), format, arg);
@@ -22,7 +22,7 @@ void log_header_printf(const char *format, ...) {
 }
 
 void log_printf(const char *format, ...) {
-  LogData new_value{UTC.now()};
+  LogData new_value{defaultTZ->now()};
   va_list arg;
   va_start(arg, format);
   vsnprintf(new_value.message, sizeof(new_value.message), format, arg);
@@ -32,7 +32,7 @@ void log_printf(const char *format, ...) {
 }
 
 void log_print(const char *str) {
-  LogData new_value{UTC.now()};
+  LogData new_value{defaultTZ->now()};
   snprintf(new_value.message, sizeof(new_value.message), "%s", str);
   Serial.print(new_value.message);
   log_buffer.push(new_value);
@@ -40,7 +40,7 @@ void log_print(const char *str) {
 // void log_print(const String &str) { log_print(str.c_str()); }
 
 void log_println(const char *str) {
-  LogData new_value{UTC.now()};
+  LogData new_value{defaultTZ->now()};
   snprintf(new_value.message, sizeof(new_value.message), "%s", str);
   Serial.println(new_value.message);
   log_buffer.push(new_value);
