@@ -800,6 +800,11 @@ void setup_web_server() {
     request->redirect("/");
   });
 
+  web_server.on("/blink", HTTP_GET, [](AsyncWebServerRequest *request) {
+    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+    request->redirect("/");
+  });
+
   web_server.onNotFound([](AsyncWebServerRequest *request) {
     Serial.println("404.");
     request->send(404, "text/plain", "Not found");
