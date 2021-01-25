@@ -118,7 +118,7 @@ bool parse_am2320_sensor_json(JsonObject &sensor_json_response) {
   log_printf("  am2320_sensor_id: %d, am2320_temp_id: %d, am2320_hum_id: %d.\n",
              am2320_sensor_id, am2320_temp_id, am2320_hum_id);
   log_header_printf(
-      "AM2320 sensor_id: %d, temperature_id: %d, humidity_id: %d.",
+      "&nbsp;&nbsp;AM2320 sensor_id: %d, temperature_id: %d, humidity_id: %d.",
       am2320_sensor_id, am2320_temp_id, am2320_hum_id);
 
   return true;
@@ -249,8 +249,9 @@ bool parse_ccs811_sensor_json(JsonObject &sensor_json_response) {
   log_printf(
       "  ccs811_sensor_id: %d, ccs811_eco2_id: %d, ccs811_etvoc_id: %d.\n",
       ccs811_sensor_id, ccs811_eco2_id, ccs811_etvoc_id);
-  log_header_printf("CCS811 sensor_id: %d, eCO2_id: %d, eTVOC_id: %d.",
-                    ccs811_sensor_id, ccs811_eco2_id, ccs811_etvoc_id);
+  log_header_printf(
+      "&nbsp;&nbsp;CCS811 sensor_id: %d, eCO2_id: %d, eTVOC_id: %d.",
+      ccs811_sensor_id, ccs811_eco2_id, ccs811_etvoc_id);
 
   return true;
 }
@@ -392,8 +393,7 @@ bool parse_hdc1080_sensor_json(JsonObject &sensor_json_response) {
       "  hdc1080_sensor_id: %d, hdc1080_temp_id: %d, hdc1080_hum_id: %d.\n",
       hdc1080_sensor_id, hdc1080_temp_id, hdc1080_hum_id);
   log_header_printf(
-
-      "HDC1080 sensor_id: %d, temperature_id: %d, humidity_id: %d.",
+      "&nbsp;&nbsp;HDC1080 sensor_id: %d, temperature_id: %d, humidity_id: %d.",
       hdc1080_sensor_id, hdc1080_temp_id, hdc1080_hum_id);
 
   return true;
@@ -588,8 +588,9 @@ bool connect_to_time() {
 
   log_println("  UTC: " + UTC.dateTime());
   log_println("  Amsterdam time: " + Amsterdam.dateTime());
-  log_header_printf(
-      "Connection stablished with the time server. Using Amsterdam time.\n");
+  log_header_printf("Connection stablished with the time server (%s). Using "
+                    "Amsterdam time.\n",
+                    UTC.dateTime().c_str());
 
   return true;
 }
