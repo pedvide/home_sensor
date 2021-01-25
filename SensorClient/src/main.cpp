@@ -575,6 +575,12 @@ void setup_OTA() {
 void connect_to_time() {
   log_println(F("Connecting to time server"));
   setDebug(ezDebugLevel_t::INFO);
+
+  if (!Amsterdam.setCache(0)) {
+    Amsterdam.setLocation("Europe/Berlin");
+  }
+  Amsterdam.setDefault();
+
   if (!waitForSync(60)) {
     Serial.println(F("  It took too long to update the time, restarting."));
     ESP.restart();
@@ -582,12 +588,9 @@ void connect_to_time() {
   setInterval(60 * 60); // 1h in seconds
 
   log_println("  UTC: " + UTC.dateTime());
-
-  Amsterdam.setLocation(F("Europe/Amsterdam"));
   log_println("  Amsterdam time: " + Amsterdam.dateTime());
-  log_header_printf("Connection stablished with the time server.\n");
-  log_header_printf("&nbsp;&nbsp;Amsterdam time: %s.",
-                    Amsterdam.dateTime().c_str());
+  log_header_printf(
+      "Connection stablished with the time server. Using Amsterdam time.\n");
 }
 
 bool setup_station() {
@@ -773,7 +776,7 @@ void setup_web_server() {
       using index_t = decltype(log_header_buffer)::index_t;
       for (index_t i = 0; i < log_header_buffer.size(); i++) {
         response->printf("<b>%s - %s</b><br>\n",
-                         UTC.dateTime(log_header_buffer[i].epoch).c_str(),
+                         Amsterdam.dateTime(log_header_buffer[i].epoch).c_str(),
                          log_header_buffer[i].message);
       }
     }
@@ -786,7 +789,7 @@ void setup_web_server() {
         String msg = String(log_buffer[i].message);
         msg.replace("  ", "&nbsp;&nbsp;");
         response->printf("%s - %s<br>\n",
-                         UTC.dateTime(log_buffer[i].epoch).c_str(),
+                         Amsterdam.dateTime(log_buffer[i].epoch).c_str(),
                          msg.c_str());
       }
     }
