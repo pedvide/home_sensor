@@ -4,6 +4,7 @@
 #include <ArduinoOTA.h>
 #include <ESP8266HTTPClient.h>
 #include <ESP8266WiFi.h>
+#include <functional>
 
 #include "Hash.h"
 #include <ArduinoJson.h>
@@ -883,6 +884,22 @@ void send_data() {
 }
 #endif
 
+void retry(std::function<bool()> func, const __FlashStringHelper *info,
+           uint8_t max_retries = 100) {
+  uint8_t num_tries = 0;
+  while (!func()) {
+    if (num_tries < max_retries) {
+      log_printf("Retrying '%s'.\n", info);
+      delay(1000);
+      num_tries++;
+    } else {
+      log_printf("Too many retries for '%S'. Restarting.\n", info);
+      delay(1000);
+      ESP.restart();
+    }
+  }
+}
+
 void setup() {
   Serial.begin(115200);
 
@@ -896,45 +913,12 @@ void setup() {
 
   setup_web_server();
 
-  uint8_t num_tries = 0;
-
 #ifndef DONT_SEND_DATA
-  while (!setup_station()) {
-    if (num_tries < 100) {
-      log_println(F("Retrying to setup the station."));
-      delay(1000);
-      num_tries++;
-    } else {
-      Serial.println(F("Too many retries to setup_station: restarting."));
-      ESP.restart();
-    }
-  }
-
-  num_tries = 0;
-  while (!setup_sensors()) {
-    if (num_tries < 100) {
-      log_println(F("Retrying to setup the sensors."));
-      delay(1000);
-      num_tries++;
-    } else {
-      Serial.println(F("Too many retries to setup_sensors: restarting."));
-      ESP.restart();
-    }
-  }
+  retry(&setup_station, F("setup the station"));
+  retry(&setup_sensors, F("setup the sensors"));
 #endif
 
-  num_tries = 0;
-  while (!setup_internal_sensors()) {
-    if (num_tries < 100) {
-      log_println(F("Retrying to setup the internal sensors."));
-      delay(1000);
-      num_tries++;
-    } else {
-      Serial.println(
-          F("Too many retries to setup_internal_sensors: restarting."));
-      ESP.restart();
-    }
-  }
+  retry(&setup_internal_sensors, F("setup the internal sensors"));
 
   // Timer
 #ifdef HAS_AM2320
