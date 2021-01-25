@@ -572,7 +572,7 @@ void setup_OTA() {
   log_header_printf("OTA enabled.");
 }
 
-void connect_to_time() {
+bool connect_to_time() {
   log_println(F("Connecting to time server"));
   setDebug(ezDebugLevel_t::INFO);
 
@@ -581,9 +581,8 @@ void connect_to_time() {
   }
   Amsterdam.setDefault();
 
-  if (!waitForSync(60)) {
-    Serial.println(F("  It took too long to update the time, restarting."));
-    ESP.restart();
+  if (!waitForSync(5)) {
+    return false;
   }
   setInterval(60 * 60); // 1h in seconds
 
@@ -591,6 +590,8 @@ void connect_to_time() {
   log_println("  Amsterdam time: " + Amsterdam.dateTime());
   log_header_printf(
       "Connection stablished with the time server. Using Amsterdam time.\n");
+
+  return true;
 }
 
 bool setup_station() {
@@ -927,7 +928,7 @@ void setup() {
 
   setup_OTA();
 
-  connect_to_time();
+  retry(&connect_to_time, F("connect to time server"));
 
   setup_web_server();
 
