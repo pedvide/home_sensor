@@ -921,11 +921,12 @@ void retry(std::function<bool()> func, const __FlashStringHelper *info,
 }
 
 void setup() {
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, LOW); // LED pin is active low
+
   Serial.begin(115200);
 
   Wire.begin();
-
-  pinMode(LED_BUILTIN, OUTPUT);
 
   connect_to_wifi();
 
