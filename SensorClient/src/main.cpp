@@ -520,8 +520,10 @@ void connect_to_wifi() {
   snprintf(web_static_info_header, sizeof(web_static_info_header),
            "<h2>ESP8266 <a href='http://%s'>%s</a> home-sensor.</h2>\n"
            "<h3>Located in the %s.</h3>\n"
-           "<h3><a href='http://%s/restart'>Restart.</a></h3>\n",
-           hostname.c_str(), hostname.c_str(), location, hostname.c_str());
+           "<h3>\n<a href='http://%s/restart'>Restart.</a>\n&emsp;\n"
+           "<a href='http://%s/blink'>Blink.</a>\n</h3>\n",
+           hostname.c_str(), hostname.c_str(), location, hostname.c_str(),
+           hostname.c_str());
 
   log_header_printf("CPU freq: %d MHz, Sketch size: %d kB (free: %d kB), "
                     "Flash size: %d kB.",
