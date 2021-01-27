@@ -552,7 +552,7 @@ void setup_OTA() {
   ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
     static uint8_t last_perc_progress = 0;
     uint8_t perc_progress = (progress / (total / 100));
-    if (((perc_progress % 5) == 0) && (perc_progress > last_perc_progress)) {
+    if (((perc_progress % 20) == 0) && (perc_progress > last_perc_progress)) {
       digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
       log_printf("OTA progress: %u%%.\n", perc_progress);
       last_perc_progress = perc_progress;
