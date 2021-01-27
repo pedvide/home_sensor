@@ -122,7 +122,7 @@ bool parse_am2320_sensor_json(JsonObject &sensor_json_response) {
   log_printf("  am2320_sensor_id: %d, am2320_temp_id: %d, am2320_hum_id: %d.\n",
              am2320_sensor_id, am2320_temp_id, am2320_hum_id);
   log_header_printf(
-      "&nbsp;&nbsp;AM2320 sensor_id: %d, temperature_id: %d, humidity_id: %d.",
+      "AM2320 sensor_id: %d, temperature_id: %d, humidity_id: %d.",
       am2320_sensor_id, am2320_temp_id, am2320_hum_id);
 
   return true;
@@ -253,9 +253,8 @@ bool parse_ccs811_sensor_json(JsonObject &sensor_json_response) {
   log_printf(
       "  ccs811_sensor_id: %d, ccs811_eco2_id: %d, ccs811_etvoc_id: %d.\n",
       ccs811_sensor_id, ccs811_eco2_id, ccs811_etvoc_id);
-  log_header_printf(
-      "&nbsp;&nbsp;CCS811 sensor_id: %d, eCO2_id: %d, eTVOC_id: %d.",
-      ccs811_sensor_id, ccs811_eco2_id, ccs811_etvoc_id);
+  log_header_printf("CCS811 sensor_id: %d, eCO2_id: %d, eTVOC_id: %d.",
+                    ccs811_sensor_id, ccs811_eco2_id, ccs811_etvoc_id);
 
   return true;
 }
@@ -397,7 +396,7 @@ bool parse_hdc1080_sensor_json(JsonObject &sensor_json_response) {
       "  hdc1080_sensor_id: %d, hdc1080_temp_id: %d, hdc1080_hum_id: %d.\n",
       hdc1080_sensor_id, hdc1080_temp_id, hdc1080_hum_id);
   log_header_printf(
-      "&nbsp;&nbsp;HDC1080 sensor_id: %d, temperature_id: %d, humidity_id: %d.",
+      "HDC1080 sensor_id: %d, temperature_id: %d, humidity_id: %d.",
       hdc1080_sensor_id, hdc1080_temp_id, hdc1080_hum_id);
 
   return true;
@@ -541,7 +540,7 @@ void connect_to_wifi() {
   log_header_printf("IP: %s, hostname: %s, chip ID: %x.",
                     WiFi.localIP().toString().c_str(), hostname.c_str(),
                     ESP.getChipId());
-  log_header_printf("&nbsp;&nbsp;MAC sha1: %s.", mac_sha.c_str());
+  log_header_printf("  MAC sha1: %s.", mac_sha.c_str());
   WiFi.setAutoReconnect(true);
 }
 
@@ -786,9 +785,12 @@ void setup_web_server() {
     if (!log_header_buffer.isEmpty()) {
       using index_t = decltype(log_header_buffer)::index_t;
       for (index_t i = 0; i < log_header_buffer.size(); i++) {
+        String msg = String(log_header_buffer[i].message);
+        msg.replace("  ", "&nbsp;&nbsp;");
+        msg.replace("\n", "");
         response->printf("<li><b>%s - %s</b></li>\n",
                          Amsterdam.dateTime(log_header_buffer[i].epoch).c_str(),
-                         log_header_buffer[i].message);
+                         msg.c_str());
       }
     }
 
@@ -800,6 +802,7 @@ void setup_web_server() {
       for (index_t i = 0; i < log_buffer.size(); i++) {
         String msg = String(log_buffer[i].message);
         msg.replace("  ", "&nbsp;&nbsp;");
+        msg.replace("\n", "");
         response->printf("<li>%s - %s</li>\n",
                          Amsterdam.dateTime(log_buffer[i].epoch).c_str(),
                          msg.c_str());
