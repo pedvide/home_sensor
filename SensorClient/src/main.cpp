@@ -43,23 +43,41 @@ const char web_server_html_header[] PROGMEM = R"=====(
 <title>ESP8266 Home Sensor Station %s</title>
 <style>
 body {font-size: 1.2vw;}
-.button {
+
+a {
+  transition: color .4s;
+  color: #265C83;
+}
+a:link,
+a:visited { color: #265C83; }
+a:hover   { color: #0074D9; }
+a:active  {
+  transition: color .3s;
+  color: #007BE6;
+}
+
+a.button {
   background-color: #555555; /* gray */
   border: none;
   color: white;
-  padding: 5px 5px;
+  padding: 5px 15px;
   text-align: center;
   text-decoration: none;
   display: inline-block;
   font-size: 1.3vw;
 }
-.button:hover {filter:invert(10%%);}
 #btn-restart.button {background-color: #F44336;} /* red */
+#btn-restart.button:hover {background-color: #555555;}
 #btn-blink.button {background-color: #008CBA;} /* blue */
+#btn-blink.button:hover {background-color: #555555;}
+#btn-dashboard.button {background-color: #f97500;} /* orange-ish */
+#btn-dashboard.button:hover {background-color: #555555;}
+
 ol   {list-style: none;}
 ol.header-log {font-weight: bold;}
 /* ol.main-log {} */
 /* li.log-msg {} */
+
 time.log-dt {font-size: smaller;}
 /* span.log-text {} */
 </style>
@@ -78,7 +96,7 @@ time.log-dt {font-size: smaller;}
 
 const char web_server_html_footer[] PROGMEM = R"=====(
 <footer>
-<a class='button' href='http://home-sensor.home:3000/d/h45MReWRk/home-sensor?orgId=1&amp;refresh=5m' target="_blank">Dashboard</a>
+<a class='button' id='btn-dashboard' href='http://home-sensor.home:3000/d/h45MReWRk/home-sensor?orgId=1&amp;refresh=5m' target="_blank">Dashboard</a>
 </footer>
 </body>
 </html>
