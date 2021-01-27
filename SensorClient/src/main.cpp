@@ -41,22 +41,44 @@ const char web_server_html_header[] PROGMEM = R"=====(
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ESP8266 Home Sensor Station %s</title>
+<style>
+body {font-size: 1.2vw;}
+.button {
+  background-color: #555555; /* gray */
+  border: none;
+  color: white;
+  padding: 5px 5px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 1.3vw;
+}
+.button:hover {filter:invert(10%%);}
+#btn-restart.button {background-color: #F44336;} /* red */
+#btn-blink.button {background-color: #008CBA;} /* blue */
+ol   {list-style: none;}
+ol.header-log {font-weight: bold;}
+/* ol.main-log {} */
+/* li.log-msg {} */
+time.log-dt {font-size: smaller;}
+/* span.log-text {} */
+</style>
 </head>
-<body style="font-size:1.2vw">
+<body>
 <header>
 <h2>ESP8266 home-sensor station <a href='http://%s'>%s</a></h2>
 <h3>Located in the %s.</h3>
 <h3>
-<a href='http://%s/restart'>Restart</a>.
+<a class='button' id='btn-restart' href='http://%s/restart'>Restart</a>
 &emsp;
-<a href='http://%s/blink'>Blink</a>.
+<a class='button' id='btn-blink' href='http://%s/blink'>Blink</a>
 </h3>
 </header>
 )=====";
 
 const char web_server_html_footer[] PROGMEM = R"=====(
 <footer>
-<a href='http://home-sensor.home:3000/d/h45MReWRk/home-sensor?orgId=1&amp;refresh=5m' target="_blank">Dashboard</a>
+<a class='button' href='http://home-sensor.home:3000/d/h45MReWRk/home-sensor?orgId=1&amp;refresh=5m' target="_blank">Dashboard</a>
 </footer>
 </body>
 </html>
@@ -776,7 +798,7 @@ void setup_web_server() {
                        hostname.c_str(), hostname.c_str(), location,
                        hostname.c_str(), hostname.c_str());
 
-    response->println(F("<main>\n<ol style='list-style: none;'>"));
+    response->println(F("<main><h3>Log</h3>\n<ol class='header-log'>"));
 
     if (!log_header_buffer.isEmpty()) {
       using index_t = decltype(log_header_buffer)::index_t;
@@ -784,13 +806,14 @@ void setup_web_server() {
         String msg = String(log_header_buffer[i].message);
         msg.replace("  ", "&nbsp;&nbsp;");
         msg.replace("\n", "");
-        response->printf("<li><b>%s - %s</b></li>\n",
+        response->printf("<li class='log-msg'><time class='log-dt'>%s</time> - "
+                         "<span class='log-text'>%s</span></li>\n",
                          Amsterdam.dateTime(log_header_buffer[i].epoch).c_str(),
                          msg.c_str());
       }
     }
 
-    response->println(F("</ol>\n<hr>\n<ol style='list-style: none;'>"));
+    response->println(F("</ol>\n<hr>\n<ol class='main-log'>"));
 
     if (!log_buffer.isEmpty()) {
       using index_t = decltype(log_buffer)::index_t;
@@ -798,7 +821,8 @@ void setup_web_server() {
         String msg = String(log_buffer[i].message);
         msg.replace("  ", "&nbsp;&nbsp;");
         msg.replace("\n", "");
-        response->printf("<li>%s - %s</li>\n",
+        response->printf("<li class='log-msg'><time class='log-dt'>%s</time> - "
+                         "<span class='log-text'>%s</span></li>\n",
                          Amsterdam.dateTime(log_buffer[i].epoch).c_str(),
                          msg.c_str());
       }
