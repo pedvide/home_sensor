@@ -35,7 +35,7 @@ const char *password PROGMEM = STAPSK;
 //// Web Server
 AsyncWebServer web_server(80);
 bool requested_restart = false;
-const char web_server_html_header[] = R"=====(
+const char web_server_html_header[] PROGMEM = R"=====(
 <!DOCTYPE HTML>
 <html>
 	<head>
@@ -43,7 +43,7 @@ const char web_server_html_header[] = R"=====(
 	</head>
 <body>
 )=====";
-const char web_server_html_footer[] = R"=====(
+const char web_server_html_footer[] PROGMEM = R"=====(
 </body>
 </html>
 )=====";
@@ -773,7 +773,7 @@ void setup_web_server() {
   // Web server
   web_server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
     AsyncResponseStream *response = request->beginResponseStream("text/html");
-    response->println(web_server_html_header);
+    response->printf_P(web_server_html_header);
     response->println(web_static_info_header);
 
     if (!log_header_buffer.isEmpty()) {
@@ -798,7 +798,7 @@ void setup_web_server() {
       }
     }
 
-    response->println(web_server_html_footer);
+    response->printf_P(web_server_html_footer);
     request->send(response);
   });
 
