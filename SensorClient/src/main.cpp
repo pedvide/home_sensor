@@ -37,13 +37,17 @@ AsyncWebServer web_server(80);
 bool requested_restart = false;
 const char web_server_html_header[] PROGMEM = R"=====(
 <!DOCTYPE HTML>
-<html>
-	<head>
-			<title>ESP8266 Home Sensor Client</title>
-	</head>
-<body>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ESP8266 Home Sensor Client</title>
+</head>
+<body style="font-size:1.2vw">
 )=====";
 const char web_server_html_footer[] PROGMEM = R"=====(
+<footer>
+<a href='http://home-sensor.home:3000/d/h45MReWRk/home-sensor?orgId=1&amp;refresh=5m' target="_blank">Dashboard</a>
+</footer>
 </body>
 </html>
 )=====";
@@ -774,30 +778,35 @@ void setup_web_server() {
   web_server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
     AsyncResponseStream *response = request->beginResponseStream("text/html");
     response->printf_P(web_server_html_header);
+    response->println("<header>");
     response->println(web_static_info_header);
+    response->println(
+        "</header>\n<main>\n<section>\n<ol style='list-style: none;'>");
 
     if (!log_header_buffer.isEmpty()) {
       using index_t = decltype(log_header_buffer)::index_t;
       for (index_t i = 0; i < log_header_buffer.size(); i++) {
-        response->printf("<b>%s - %s</b><br>\n",
+        response->printf("<li><b>%s - %s</b></li>\n",
                          Amsterdam.dateTime(log_header_buffer[i].epoch).c_str(),
                          log_header_buffer[i].message);
       }
     }
 
-    response->println("<hr>");
+    response->println(
+        "</ol>\n</section>\n<hr>\n<section>\n<ol style='list-style: none;'>");
 
     if (!log_buffer.isEmpty()) {
       using index_t = decltype(log_buffer)::index_t;
       for (index_t i = 0; i < log_buffer.size(); i++) {
         String msg = String(log_buffer[i].message);
         msg.replace("  ", "&nbsp;&nbsp;");
-        response->printf("%s - %s<br>\n",
+        response->printf("<li>%s - %s</li>\n",
                          Amsterdam.dateTime(log_buffer[i].epoch).c_str(),
                          msg.c_str());
       }
     }
 
+    response->println("</ol></section>\n</main>");
     response->printf_P(web_server_html_footer);
     request->send(response);
   });
