@@ -917,6 +917,10 @@ void retry(std::function<bool()> func, const __FlashStringHelper *info,
   while (!func()) {
     if (num_tries < max_retries) {
       log_printf("Retrying '%s'.\n", info);
+      if (requested_restart) {
+        delay(10);
+        ESP.restart();
+      }
       delay(1000);
       num_tries++;
     } else {
