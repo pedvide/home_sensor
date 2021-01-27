@@ -939,11 +939,12 @@ void setup() {
 
   Wire.begin();
 
-  log_header_printf("CPU freq: %d MHz, Sketch size: %d kB (free: %d kB), "
-                    "Flash size: %d kB.",
-                    ESP.getCpuFreqMHz(), ESP.getSketchSize() / 1024,
-                    ESP.getFreeSketchSpace() / 1024,
-                    ESP.getFlashChipRealSize() / 1024);
+  log_header_printf("Last restart due to %s.", ESP.getResetReason().c_str());
+  log_header_printf("CPU freq: %d MHz, Flash size: %d kB, Sketch size: %d kB "
+                    "(free: %d kB), Free RAM: %d kB.",
+                    ESP.getCpuFreqMHz(), ESP.getFlashChipRealSize() / 1024,
+                    ESP.getSketchSize() / 1024, ESP.getFreeSketchSpace() / 1024,
+                    ESP.getFreeHeap() / 1024);
 
   connect_to_wifi();
 
