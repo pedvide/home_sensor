@@ -74,7 +74,7 @@ typedef struct {
   time_t epoch;
   uint8_t sensor_id;
   uint8_t magnitude_id;
-  char value[50];
+  char value[10];
 } SensorData;
 SensorData sensor_data;
 CircularBuffer<SensorData, 255> sensor_buffer; // Keep some raw data
