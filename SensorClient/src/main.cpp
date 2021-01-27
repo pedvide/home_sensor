@@ -43,7 +43,17 @@ const char web_server_html_header[] PROGMEM = R"=====(
 <title>ESP8266 Home Sensor Client</title>
 </head>
 <body style="font-size:1.2vw">
+<header>
+<h2>ESP8266 <a href='http://%s'>%s</a> home-sensor.</h2>
+<h3>Located in the %s.</h3>
+<h3>
+<a href='http://%s/restart'>Restart</a>.
+&emsp;
+<a href='http://%s/blink'>Blink</a>.
+</h3>
+</header>
 )=====";
+
 const char web_server_html_footer[] PROGMEM = R"=====(
 <footer>
 <a href='http://home-sensor.home:3000/d/h45MReWRk/home-sensor?orgId=1&amp;refresh=5m' target="_blank">Dashboard</a>
@@ -51,10 +61,9 @@ const char web_server_html_footer[] PROGMEM = R"=====(
 </body>
 </html>
 )=====";
-char web_static_info_header[400];
 
 //// Station
-String mac_sha;
+String mac_sha, hostname;
 const char *location PROGMEM = LOCATION;
 
 //// rest server
@@ -518,7 +527,7 @@ void connect_to_wifi() {
   }
 
   mac_sha = sha1(WiFi.macAddress());
-  String hostname = WiFi.hostname();
+  hostname = WiFi.hostname();
   hostname.toLowerCase();
 
   // Print ESP8266 Local IP Address
@@ -763,11 +772,11 @@ void setup_web_server() {
   // Web server
   web_server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
     AsyncResponseStream *response = request->beginResponseStream("text/html");
-    response->printf_P(web_server_html_header);
-    response->println("<header>");
-    response->println(web_static_info_header);
-    response->println(
-        "</header>\n<main>\n<section>\n<ol style='list-style: none;'>");
+    response->printf_P(web_server_html_header, hostname.c_str(),
+                       hostname.c_str(), location, hostname.c_str(),
+                       hostname.c_str());
+
+    response->println(F("<main>\n<section>\n<ol style='list-style: none;'>"));
 
     if (!log_header_buffer.isEmpty()) {
       using index_t = decltype(log_header_buffer)::index_t;
@@ -781,8 +790,8 @@ void setup_web_server() {
       }
     }
 
-    response->println(
-        "</ol>\n</section>\n<hr>\n<section>\n<ol style='list-style: none;'>");
+    response->println(F(
+        "</ol>\n</section>\n<hr>\n<section>\n<ol style='list-style: none;'>"));
 
     if (!log_buffer.isEmpty()) {
       using index_t = decltype(log_buffer)::index_t;
@@ -796,7 +805,7 @@ void setup_web_server() {
       }
     }
 
-    response->println("</ol></section>\n</main>");
+    response->println(F("</ol></section>\n</main>"));
     response->printf_P(web_server_html_footer);
     request->send(response);
   });
@@ -812,8 +821,8 @@ void setup_web_server() {
   });
 
   web_server.onNotFound([](AsyncWebServerRequest *request) {
-    Serial.println("404.");
-    request->send(404, "text/plain", "Not found");
+    Serial.println(F("404."));
+    request->send(404, F("text/plain"), F("Not found"));
   });
 
   // Start server
