@@ -40,11 +40,11 @@ const char web_server_html_header[] PROGMEM = R"=====(
 <html lang="en">
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ESP8266 Home Sensor Client</title>
+<title>ESP8266 Home Sensor Station %s</title>
 </head>
 <body style="font-size:1.2vw">
 <header>
-<h2>ESP8266 <a href='http://%s'>%s</a> home-sensor.</h2>
+<h2>ESP8266 home-sensor station <a href='http://%s'>%s</a></h2>
 <h3>Located in the %s.</h3>
 <h3>
 <a href='http://%s/restart'>Restart</a>.
@@ -773,10 +773,10 @@ void setup_web_server() {
   web_server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
     AsyncResponseStream *response = request->beginResponseStream("text/html");
     response->printf_P(web_server_html_header, hostname.c_str(),
-                       hostname.c_str(), location, hostname.c_str(),
-                       hostname.c_str());
+                       hostname.c_str(), hostname.c_str(), location,
+                       hostname.c_str(), hostname.c_str());
 
-    response->println(F("<main>\n<section>\n<ol style='list-style: none;'>"));
+    response->println(F("<main>\n<ol style='list-style: none;'>"));
 
     if (!log_header_buffer.isEmpty()) {
       using index_t = decltype(log_header_buffer)::index_t;
@@ -790,8 +790,7 @@ void setup_web_server() {
       }
     }
 
-    response->println(F(
-        "</ol>\n</section>\n<hr>\n<section>\n<ol style='list-style: none;'>"));
+    response->println(F("</ol>\n<hr>\n<ol style='list-style: none;'>"));
 
     if (!log_buffer.isEmpty()) {
       using index_t = decltype(log_buffer)::index_t;
@@ -805,7 +804,7 @@ void setup_web_server() {
       }
     }
 
-    response->println(F("</ol></section>\n</main>"));
+    response->println(F("</ol>\n</main>"));
     response->printf_P(web_server_html_footer);
     request->send(response);
   });
