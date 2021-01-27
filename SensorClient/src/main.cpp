@@ -942,11 +942,11 @@ void setup() {
 
   connect_to_wifi();
 
+  setup_web_server();
+
   setup_OTA();
 
   retry(&connect_to_time, F("connect to time server"));
-
-  setup_web_server();
 
 #ifndef DONT_SEND_DATA
   retry(&setup_station, F("setup the station"));
