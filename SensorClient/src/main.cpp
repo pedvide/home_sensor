@@ -520,19 +520,6 @@ void connect_to_wifi() {
   mac_sha = sha1(WiFi.macAddress());
   String hostname = WiFi.hostname();
   hostname.toLowerCase();
-  snprintf(web_static_info_header, sizeof(web_static_info_header),
-           "<h2>ESP8266 <a href='http://%s'>%s</a> home-sensor.</h2>\n"
-           "<h3>Located in the %s.</h3>\n"
-           "<h3>\n<a href='http://%s/restart'>Restart.</a>\n&emsp;\n"
-           "<a href='http://%s/blink'>Blink.</a>\n</h3>\n",
-           hostname.c_str(), hostname.c_str(), location, hostname.c_str(),
-           hostname.c_str());
-
-  log_header_printf("CPU freq: %d MHz, Sketch size: %d kB (free: %d kB), "
-                    "Flash size: %d kB.",
-                    ESP.getCpuFreqMHz(), ESP.getSketchSize() / 1024,
-                    ESP.getFreeSketchSpace() / 1024,
-                    ESP.getFlashChipRealSize() / 1024);
 
   // Print ESP8266 Local IP Address
   log_printf("  Connected! IP: %s, MAC sha1: %s.\n",
@@ -939,6 +926,12 @@ void setup() {
   Serial.begin(115200);
 
   Wire.begin();
+
+  log_header_printf("CPU freq: %d MHz, Sketch size: %d kB (free: %d kB), "
+                    "Flash size: %d kB.",
+                    ESP.getCpuFreqMHz(), ESP.getSketchSize() / 1024,
+                    ESP.getFreeSketchSpace() / 1024,
+                    ESP.getFlashChipRealSize() / 1024);
 
   connect_to_wifi();
 
