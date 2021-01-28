@@ -39,10 +39,15 @@ const char web_server_html_header[] PROGMEM = R"=====(
 <!DOCTYPE HTML>
 <html lang="en">
 <head>
+<meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ESP8266 Home Sensor Station %s</title>
 <style>
-body {font-size: 1.2vw;}
+body {
+  font-size: 1.2vw;
+  display: grid;
+  place-items: flex-start;
+}
 
 a {
   transition: color .4s;
@@ -60,7 +65,7 @@ a.button {
   background-color: #555555; /* gray */
   border: none;
   color: white;
-  padding: 5px 15px;
+  padding: 0.25em 1em;
   text-align: center;
   text-decoration: none;
   display: inline-block;
@@ -73,7 +78,21 @@ a.button {
 #btn-dashboard.button {background-color: #f97500;} /* orange-ish */
 #btn-dashboard.button:hover {background-color: #555555;}
 
-ol   {list-style: none;}
+div.button-bar {
+  display: flex;
+  margin-left: 0em;
+  margin-right: 1em;
+}
+div.button-holder {
+  flex: 0 0 25%%;
+  padding-left: 1em;
+  padding-right: 1em;
+}
+
+ol {
+  list-style: none;
+  padding-left: 1em;
+}
 ol.header-log {font-weight: bold;}
 /* ol.main-log {} */
 /* li.log-msg {} */
@@ -86,17 +105,23 @@ time.log-dt {font-size: smaller;}
 <header>
 <h2>ESP8266 home-sensor station <a href='http://%s'>%s</a></h2>
 <h3>Located in the %s.</h3>
-<h3>
-<a class='button' id='btn-restart' href='http://%s/restart'>Restart</a>
-&emsp;
-<a class='button' id='btn-blink' href='http://%s/blink'>Blink</a>
-</h3>
+<div class="button-bar">
+  <div class="button-holder">
+    <a class='button' id='btn-restart' href='http://%s/restart'>Restart</a>
+  </div>
+  <div class="button-holder">
+    <a class='button' id='btn-blink' href='http://%s/blink'>Blink</a>
+  </div>
+  <div class="button-holder">
+    <a class='button' id='btn-dashboard' href='http://home-sensor.home:3000/d/h45MReWRk/home-sensor?orgId=1&amp;refresh=5m' target="_blank">Dashboard</a>
+  </div>
+</div>
 </header>
 )=====";
 
 const char web_server_html_footer[] PROGMEM = R"=====(
 <footer>
-<a class='button' id='btn-dashboard' href='http://home-sensor.home:3000/d/h45MReWRk/home-sensor?orgId=1&amp;refresh=5m' target="_blank">Dashboard</a>
+Home Sensor Project
 </footer>
 </body>
 </html>
@@ -816,7 +841,8 @@ void setup_web_server() {
                        hostname.c_str(), hostname.c_str(), location,
                        hostname.c_str(), hostname.c_str());
 
-    response->println(F("<main><h3>Log</h3>\n<ol class='header-log'>"));
+    response->println(
+        F("<main><h2>Logs</h2>\n<h3>Setup</h3>\n<ol class='header-log'>"));
 
     if (!log_header_buffer.isEmpty()) {
       using index_t = decltype(log_header_buffer)::index_t;
@@ -831,7 +857,7 @@ void setup_web_server() {
       }
     }
 
-    response->println(F("</ol>\n<hr>\n<ol class='main-log'>"));
+    response->println(F("</ol>\n<h3>Live</h3>\n<ol class='main-log'>"));
 
     if (!log_buffer.isEmpty()) {
       using index_t = decltype(log_buffer)::index_t;
