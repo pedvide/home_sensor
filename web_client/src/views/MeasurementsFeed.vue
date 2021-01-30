@@ -10,7 +10,7 @@
 </template>
 
 <script>
-import axios from "axios";
+import fetchData from "@/utils/api_query";
 import Measurement from "@/components/Measurement.vue";
 
 export default {
@@ -22,24 +22,14 @@ export default {
     };
   },
   created() {
-    this.fetchMeasurements();
-    setInterval(this.fetchMeasurements, 1000);
+    fetchData.call(this, "measurements");
+    setInterval(fetchData.bind(this), 1000, "measurements");
   },
   watch: {
     // call again the method if the route changes
-    $route: "fetchData",
+    // $route: "fetchData",
   },
-  methods: {
-    fetchMeasurements() {
-      const baseURI = "http://home-sensor.home/api/measurements";
-      axios
-        .get(baseURI)
-        .then((result) => {
-          this.measurements = result.data;
-        })
-        .catch((error) => console.log(error));
-    },
-  },
+  methods: {},
 };
 </script>
 
