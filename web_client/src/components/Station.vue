@@ -2,7 +2,7 @@
   <div class="card">
     <div class="content">
       <h4>Station {{ station.id }}</h4>
-      <p>Located at {{ station.location }}</p>
+      <p>Located at the {{ station.location }}</p>
     </div>
   </div>
 </template>
