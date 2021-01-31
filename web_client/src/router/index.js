@@ -11,17 +11,22 @@ const routes = [
     component: Stations,
   },
   {
+    path: "/sensors",
+    name: "Sensors",
+    component: () => import("../views/Sensors.vue"),
+  },
+  {
+    path: "/measurements",
+    name: "Measurements",
+    component: () => import("../views/MeasurementsFeed.vue"),
+  },
+  {
     path: "/about",
     name: "About",
     // route level code-splitting
     // this generates a separate chunk (about.[hash].js) for this route
     // which is lazy-loaded when the route is visited.
     component: () => import(/* webpackChunkName: "about" */ "../views/About.vue"),
-  },
-  {
-    path: "/feed",
-    name: "Measurements Feed",
-    component: () => import("../views/MeasurementsFeed.vue"),
   },
 ];
 

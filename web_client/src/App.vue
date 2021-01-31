@@ -3,8 +3,9 @@
     <header>
       <h1>Home Sensor</h1>
       <nav>
-        <router-link to="/">Stations</router-link>|
-        <router-link to="/feed">Measurements Feed</router-link>|
+        <router-link to="/">Stations</router-link> |
+        <router-link to="/sensors">Sensors</router-link> |
+        <router-link to="/measurements">Measurements</router-link> |
         <router-link to="/about">About</router-link>
       </nav>
     </header>
