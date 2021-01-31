@@ -2,6 +2,8 @@ version: "3.8"
 networks:
   influxdb:
     external: true
+  traefik:
+    external: true
 
 services:
   server:
@@ -14,9 +16,15 @@ services:
     volumes:
       - ./rest_server/data:/var/lib/home-sensor
     expose:
-      - "8080"
+      - "80"
     networks:
       - influxdb
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.port=80"
+      - "traefik.http.routers.home-sensor-server.rule=PathPrefix(`/api`)"
+      - "traefik.docker.network=traefik"
     restart: unless-stopped
 
   web:
@@ -26,6 +34,14 @@ services:
     image: home-sensor/web
     expose:
       - "8080"
+    networks:
+      - traefik
     restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.port=8080"
+      - "traefik.http.routers.home-sensor-web.rule=PathPrefix(`/`)"
+      - "traefik.docker.network=traefik"
     depends_on:
       - server
+
