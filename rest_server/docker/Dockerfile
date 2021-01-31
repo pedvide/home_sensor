@@ -1,7 +1,7 @@
 FROM tiangolo/uvicorn-gunicorn-fastapi:python3.7
 
 ENV MODULE_NAME="rest_server.app"
-ENV VARIABLE_NAME="app" 
+ENV VARIABLE_NAME="app"
 ENV PORT 8080
 
 COPY ./requirements.txt ./
