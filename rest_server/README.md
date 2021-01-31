@@ -24,7 +24,7 @@ pytest tests/
 Build image
 
 ```bash
-docker build -t rest_server -f docker/Dockerfile .
+docker build -t home-sensor/rest_server -f docker/Dockerfile .
 ```
 
 Create a influxdb container, with a bridge network called influxdb,
@@ -38,13 +38,13 @@ curl -POST -u influx_admin:influx_admin123 http://localhost:8086/query \
 Run container:
 
 ```bash
-docker run -d --name homesensor -p 80:8080 \
+docker run -d --name home-sensor-server -p 80:8080 \
   --restart=always \
   -e MAX_WORKERS=1 \
   --net influxdb \
   -v /home/pedvide/services/home_sensor/rest_server/data:/var/lib/home-sensor \
   --user nobody \
-  rest_server
+  home-sensor/rest_server
 ```
 
 ## Logs

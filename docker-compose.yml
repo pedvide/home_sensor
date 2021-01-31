@@ -1,0 +1,32 @@
+version: "3.8"
+networks:
+  default:
+    external:
+      name: influxdb
+
+services:
+  home-sensor-server:
+    build:
+      context: ./rest_server/
+      dockerfile: ./rest_server/docker/Dockerfile
+    image:  home-sensor/server
+    environment:
+      - MAX_WORKERS=1
+    volumes:
+      - ./rest_server/data:/var/lib/home-sensor
+    expose:
+      - "8080"
+    networks:
+      - influxdb
+    restart: unless-stopped
+
+  home-sensor-web:
+    build:
+      context: ./web_client/
+      dockerfile: ./web_client/docker/Dockerfile
+    image: home-sensor/web
+    expose:
+      - "8080"
+    restart: unless-stopped
+    depends_on:
+      - home-sensor-server

@@ -28,7 +28,22 @@ npm run lint
 
 See [Configuration Reference](https://cli.vuejs.org/config/).
 
-## Deployment for raspberry pi
+## Deployment
+
+### Deployment with docker
+
+Build image:
+
+```bash
+docker build -t home-sensor/web -f docker/Dockerfile .
+```
+
+Then run with:
+```bash
+docker run -it -p 8080:8080 --name home-sensor-web home-sensor/web
+```
+
+### Deployment for raspberry pi
 
 Install nginx and edit the conf file with
 
@@ -60,7 +75,7 @@ sudo systemctl start nginx.service
 
 Go to `<hostname>` to see web app.
 
-## Logs
+### Logs
 
 Nginx web_client:
 
