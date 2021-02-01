@@ -1,7 +1,6 @@
 <template>
-  <article class="measurements-feed">
-    <h1>Live Measurements Feed</h1>
-    <ol id="measurement-feed">
+  <article class="measurements">
+    <ol id="measurement">
       <li v-for="m in measurements" :key="m.id">
         <Measurement :m="m" />
       </li>
@@ -14,7 +13,7 @@ import fetchData from "@/utils/api_query";
 import Measurement from "@/components/Measurement.vue";
 
 export default {
-  name: "MeasurementsFeed",
+  name: "Measurements",
   components: { Measurement },
   data() {
     return {

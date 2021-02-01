@@ -18,7 +18,7 @@ const routes = [
   {
     path: "/measurements",
     name: "Measurements",
-    component: () => import("../views/MeasurementsFeed.vue"),
+    component: () => import("../views/Measurements.vue"),
   },
   {
     path: "/about",
