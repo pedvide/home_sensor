@@ -1,7 +1,10 @@
 <template>
   <article class="measurements">
     <ol id="measurement">
-      <li v-for="m in measurements" :key="m.id">
+      <li
+        v-for="m in measurements"
+        :key="`${m.timestamp}-${m.station_id}-${m.sensor_id}-${m.magnitude.id}`"
+      >
         <Measurement :m="m" />
       </li>
     </ol>
@@ -18,16 +21,20 @@ export default {
   data() {
     return {
       measurements: [],
+      refreshTimer: null,
     };
   },
+
   created() {
     fetchData.call(this, "measurements");
-    setInterval(fetchData.bind(this), 1000, "measurements");
+    this.refreshTimer = setInterval(fetchData.bind(this), 1000, "measurements");
   },
-  watch: {
-    // call again the method if the route changes
-    // $route: "fetchData",
+
+  beforeRouteLeave(to, from, next) {
+    clearInterval(this.refreshTimer);
+    next();
   },
+
   methods: {},
 };
 </script>

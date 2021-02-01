@@ -21,11 +21,16 @@ export default {
   data() {
     return {
       sensors: [],
+      refreshTimer: null,
     };
   },
   created() {
     fetchData.call(this, "sensors");
-    setInterval(fetchData.bind(this), 1000, "sensors");
+    this.refreshTimer = setInterval(fetchData.bind(this), 1000, "sensors");
+  },
+  beforeRouteLeave(to, from, next) {
+    clearInterval(this.refreshTimer);
+    next();
   },
 };
 </script>
