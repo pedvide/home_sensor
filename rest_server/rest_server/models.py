@@ -71,7 +71,7 @@ class Sensor(Base):
             if station_sensor.valid_until is None
         ]
 
-    magnitudes = relationship("Magnitude", back_populates="sensor",)
+    magnitudes = relationship("Magnitude", back_populates="sensor")
 
     def __repr__(self):
         return f"Sensor(id={self.id}, name={self.name})"

@@ -137,7 +137,11 @@ def transform_measurement(db: Session, db_measurement: dict):
 
 
 def get_station_measurements(
-    db: Session, db_influx: InfluxDBClient, station_id: int, offset: int = 0, limit: int = 10,
+    db: Session,
+    db_influx: InfluxDBClient,
+    station_id: int,
+    offset: int = 0,
+    limit: int = 10,
 ):
     db_measurements = db_influx.query(
         f"SELECT * FROM raw_data WHERE station_id='{station_id}' "
@@ -158,7 +162,8 @@ def get_all_measurements(
     limit: int = 10,
 ):
     db_measurements = db_influx.query(
-        f"SELECT * FROM raw_data ORDER BY time DESC LIMIT {limit} OFFSET {offset}", epoch="s",
+        f"SELECT * FROM raw_data ORDER BY time DESC LIMIT {limit} OFFSET {offset}",
+        epoch="s",
     ).get_points()
 
     measurements = [transform_measurement(db, db_measurement) for db_measurement in db_measurements]
@@ -209,7 +214,7 @@ def create_measurements(
             )
         )
 
-    if db_influx.write_points(json_measurements, time_precision="s",):
+    if db_influx.write_points(json_measurements, time_precision="s"):
         return response_measurements
     else:
         raise InfluxDBError("Error writing a measurement")

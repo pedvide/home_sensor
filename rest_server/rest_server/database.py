@@ -6,8 +6,6 @@ from pathlib import Path
 
 from influxdb import InfluxDBClient
 
-from . import models
-
 
 database_file = "sql_app.db"
 database_path = Path("/var/lib/home-sensor") / database_file
