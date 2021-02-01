@@ -6,7 +6,7 @@
         <li v-for="mag in sensor.magnitudes" :key="mag.id">
           <div class="card">
             <div class="content">
-              <p>{{ mag.name }} ({{ mag.unit }})</p>
+              <h5>{{ mag.name }} ({{ mag.unit }})</h5>
             </div>
           </div>
         </li>

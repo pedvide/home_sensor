@@ -12,5 +12,13 @@
 
 /* Add some padding inside the card content */
 .content {
-  padding: 2px 16px;
+  padding: 5px 16px;
+}
+.content > * {
+  margin-bottom: 10px;
+  margin-top: 5px;
+}
+.content > p {
+  margin-bottom: 5px;
+  margin-top: 0px;
 }
