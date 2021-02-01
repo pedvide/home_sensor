@@ -12,7 +12,7 @@ services:
       dockerfile: docker/Dockerfile
     image:  home-sensor/server
     environment:
-      - MAX_WORKERS=1
+      - MAX_WORKERS=4
     volumes:
       - ./rest_server/data:/var/lib/home-sensor
     expose:
