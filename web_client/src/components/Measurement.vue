@@ -5,7 +5,16 @@
         Name:
         {{ m.magnitude.name[0].toUpperCase() + m.magnitude.name.substring(1) }}
       </h4>
-      <p>Date: {{ Date(m.timestamp).toLocaleString().split("(")[0].trim() }}</p>
+      <p>
+        Date:
+        {{
+          new Date(m.timestamp * 1000)
+            .toString()
+            .split("(")[0]
+            .split("GMT")[0]
+            .trim()
+        }}
+      </p>
       <p>
         Value:
         {{ parseFloat(m.value).toFixed(-Math.log10(m.magnitude.precision)) }}
