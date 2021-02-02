@@ -1,7 +1,7 @@
 import axios from "axios";
 
-function fetchData(name) {
-  const baseURI = `http://home-sensor.home/api/${name}`;
+function fetchData(name, limit = 5) {
+  const baseURI = `http://home-sensor.home/api/${name}?limit=${limit}`;
   axios
     .get(baseURI)
     .then((result) => {
