@@ -14,6 +14,7 @@ module.exports = {
   rules: {
     "no-console": "off",
     "no-debugger": "off",
+    "comma-dangle": "off",
     quotes: [2, "double"],
     "vue/singleline-html-element-content-newline": [0],
     "vue/multiline-html-element-content-newline": [0],
