@@ -26,8 +26,13 @@ export default {
   },
 
   created() {
-    fetchData.call(this, "measurements");
-    this.refreshTimer = setInterval(fetchData.bind(this), 1000, "measurements");
+    fetchData.call(this, "measurements", 10);
+    this.refreshTimer = setInterval(
+      fetchData.bind(this),
+      500,
+      "measurements",
+      10
+    );
   },
 
   beforeRouteLeave(to, from, next) {
