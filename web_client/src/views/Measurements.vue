@@ -1,13 +1,14 @@
 <template>
   <article class="measurements">
-    <ol id="measurement">
+    <transition-group name="list" tag="ol">
       <li
         v-for="m in measurements"
         :key="`${m.timestamp}-${m.station_id}-${m.sensor_id}-${m.magnitude.id}`"
+        class="list-item"
       >
         <Measurement :m="m" />
       </li>
-    </ol>
+    </transition-group>
   </article>
 </template>
 
@@ -51,8 +52,21 @@ ol {
   display: inline-block;
   text-align: left;
 }
-/* li {
+
+.list-complete-item {
+  transition: all 0.5s;
   display: inline-block;
-  margin: 0 10px;
-} */
+  margin-right: 10px;
+}
+.list-enter-active,
+.list-leave-active {
+  transition: all 0.5s;
+}
+.list-enter, .list-leave-to /* .list-leave-active below version 2.1.8 */ {
+  opacity: 0;
+  /* transform: translateX(30px); */
+}
+.list-move {
+  transition: transform 0.5s;
+}
 </style>
