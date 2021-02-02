@@ -113,7 +113,7 @@ time.log-dt {font-size: smaller;}
     <a class='button' id='btn-blink' href='http://%s/blink'>Blink</a>
   </div>
   <div class="button-holder">
-    <a class='button' id='btn-dashboard' href='http://home-sensor.home:3000/d/h45MReWRk/home-sensor?orgId=1&amp;refresh=5m' target="_blank">Dashboard</a>
+    <a class='button' id='btn-dashboard' href='http://home-sensor.home/grafana/d/h45MReWRk/home-sensor?orgId=1&refresh=5m' target="_blank">Dashboard</a>
   </div>
 </div>
 </header>
