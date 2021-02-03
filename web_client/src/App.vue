@@ -22,6 +22,22 @@
   color: #2c3e50;
 }
 
+body {
+  margin: auto;
+}
+/* Desktop Styles */
+@media only screen and (max-width: 961px) {
+  body {
+    width: 100%;
+  }
+}
+/* app Styles */
+@media only screen and (min-width: 961px) {
+  body {
+    width: 960px;
+  }
+}
+
 nav {
   padding: 30px;
 }
