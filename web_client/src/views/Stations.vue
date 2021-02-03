@@ -1,7 +1,7 @@
 <template>
   <article class="stations">
-    <ol id="stations-list">
-      <li v-for="s in stations" :key="s.id">
+    <ol id="stations-list" class="list">
+      <li v-for="s in stations" :key="s.id" class="list">
         <Station :station="s" />
       </li>
     </ol>
@@ -36,13 +36,5 @@ export default {
 </script>
 
 <style scoped>
-ol {
-  list-style-type: none;
-  display: inline-block;
-  text-align: left;
-}
-/* li {
-  display: inline-block;
-  margin: 0 10px;
-} */
+@import "../assets/card.css";
 </style>

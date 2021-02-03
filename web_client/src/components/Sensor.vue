@@ -2,8 +2,8 @@
   <div class="card">
     <div class="content">
       <h4>{{ sensor.name }}</h4>
-      <ol id="magnitudes-list">
-        <li v-for="mag in sensor.magnitudes" :key="mag.id">
+      <ol id="magnitudes-list" class="list">
+        <li v-for="mag in sensor.magnitudes" :key="mag.id" class="list">
           <div class="card">
             <div class="content">
               <h5>{{ mag.name }} ({{ mag.unit }})</h5>
@@ -30,9 +30,15 @@ export default {
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
 @import "../assets/card.css";
-ol {
-  list-style-type: none;
-  display: inline-block;
-  text-align: left;
+/* Reset some settings for nested cards and lists */
+.card .card {
+  width: auto;
+  min-height: auto;
+}
+@media only screen and (max-width: 961px) {
+  ol.list ol.list {
+    flex-direction: row;
+    justify-content: left;
+  }
 }
 </style>

@@ -1,10 +1,10 @@
 <template>
   <article class="measurements">
-    <transition-group name="list" tag="ol">
+    <transition-group name="dynamic-list" tag="ol" class="list">
       <li
         v-for="m in measurements"
         :key="`${m.timestamp}-${m.station_id}-${m.sensor_id}-${m.magnitude.id}`"
-        class="list-item"
+        class="list"
       >
         <Measurement :m="m" />
       </li>
@@ -30,7 +30,7 @@ export default {
     fetchData.call(this, "measurements", 10);
     this.refreshTimer = setInterval(
       fetchData.bind(this),
-      500,
+      750,
       "measurements",
       10
     );
@@ -47,26 +47,24 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-ol {
-  list-style-type: none;
-  display: inline-block;
-  text-align: left;
+@import "../assets/card.css";
+ol.list {
+  flex-direction: column;
+  align-items: center;
+}
+.card {
+  min-height: 0px;
 }
 
-.list-complete-item {
-  transition: all 0.5s;
-  display: inline-block;
-  margin-right: 10px;
+.dynamic-list-enter-active,
+.dynamic-list-leave-active {
+  transition: all 0.75s;
 }
-.list-enter-active,
-.list-leave-active {
-  transition: all 0.5s;
-}
-.list-enter, .list-leave-to /* .list-leave-active below version 2.1.8 */ {
+.dynamic-list-enter,
+.dynamic-list-leave-to {
   opacity: 0;
-  /* transform: translateX(30px); */
 }
-.list-move {
-  transition: transform 0.5s;
+.dynamic-list-move {
+  transition: transform 0.75s;
 }
 </style>

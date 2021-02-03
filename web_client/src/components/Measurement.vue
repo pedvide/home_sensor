@@ -1,12 +1,7 @@
 <template>
   <div class="card">
     <div class="content">
-      <h4>
-        Name:
-        {{ m.magnitude.name[0].toUpperCase() + m.magnitude.name.substring(1) }}
-      </h4>
-      <p>
-        Date:
+      <h5>
         {{
           new Date(m.timestamp * 1000)
             .toString()
@@ -14,9 +9,9 @@
             .split("GMT")[0]
             .trim()
         }}
-      </p>
+      </h5>
       <p>
-        Value:
+        {{ m.magnitude.name[0].toUpperCase() + m.magnitude.name.substring(1) }}
         {{ parseFloat(m.value).toFixed(-Math.log10(m.magnitude.precision)) }}
         {{ m.magnitude.unit }}
       </p>

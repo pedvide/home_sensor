@@ -1,7 +1,7 @@
 <template>
   <article class="sensors">
-    <ol id="sensors-list">
-      <li v-for="s in sensors" :key="s.id">
+    <ol id="sensors-list" class="list">
+      <li v-for="s in sensors" :key="s.id" class="list">
         <Sensor :sensor="s" />
       </li>
     </ol>
@@ -36,13 +36,5 @@ export default {
 </script>
 
 <style scoped>
-ol {
-  list-style-type: none;
-  display: inline-block;
-  text-align: left;
-}
-/* li {
-  display: inline-block;
-  margin: 0 10px;
-} */
+@import "../assets/card.css";
 </style>
