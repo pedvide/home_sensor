@@ -25,8 +25,8 @@ export default {
     };
   },
   created() {
-    fetchData.call(this, "stations");
-    this.refreshTimer = setInterval(fetchData.bind(this), 1000, "stations");
+    fetchData.call(this, "stations", 20);
+    this.refreshTimer = setInterval(fetchData.bind(this), 1000, "stations", 20);
   },
   beforeRouteLeave(to, from, next) {
     clearInterval(this.refreshTimer);
