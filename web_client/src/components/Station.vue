@@ -40,6 +40,10 @@ export default {
 <style scoped>
 @import "../assets/card.css";
 
+.list .list {
+  width: 100%;
+}
+
 .sensors-enter-active,
 .sensors-leave-active {
   transition: opacity 0.15s;
