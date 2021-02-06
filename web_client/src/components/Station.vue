@@ -4,7 +4,7 @@
       <h4>Station {{ station.id }}</h4>
       <p>Located at the {{ station.location }}</p>
       <transition name="sensors">
-        <ol v-if="showSensors" class="list">
+        <ol v-if="showSensors" @click.stop class="list">
           <li v-for="s in station.sensors" :key="s.id" class="list">
             <Sensor :sensor="s" />
           </li>
@@ -32,12 +32,6 @@ export default {
     return {
       showSensors: false,
     };
-  },
-  methods: {
-    testFunction(event) {
-      console.log("test clicked");
-      console.log(event);
-    },
   },
 };
 </script>
