@@ -1,8 +1,12 @@
 <template>
-  <div class="card">
+  <div
+    @click="showMagnitudes = !showMagnitudes"
+    :style="showMagnitudes ? '' : 'min-height: unset;'"
+    class="card"
+  >
     <div class="content">
       <h4>{{ sensor.name }}</h4>
-      <ol id="magnitudes-list" class="list">
+      <ol v-if="showMagnitudes" id="magnitudes-list" class="list">
         <li v-for="mag in sensor.magnitudes" :key="mag.id" class="list">
           <div class="card">
             <div class="content">
@@ -23,6 +27,11 @@ export default {
       default: () => "",
       type: Object,
     },
+  },
+  data() {
+    return {
+      showMagnitudes: true,
+    };
   },
 };
 </script>
