@@ -621,7 +621,7 @@ bool setup_station() {
   log_println("setup_station");
 
   // Prepare JSON document
-  const size_t capacity = JSON_OBJECT_SIZE(2);
+  const size_t capacity = JSON_OBJECT_SIZE(3);
   DynamicJsonDocument station_json(capacity + 50);
 
   station_json["token"] = mac_sha;
@@ -944,6 +944,7 @@ void retry(std::function<bool()> func, const __FlashStringHelper *info,
         delay(10);
         ESP.restart();
       }
+      ArduinoOTA.handle();
       delay(1000);
       num_tries++;
     } else {
