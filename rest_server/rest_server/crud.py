@@ -69,7 +69,9 @@ def get_all_stations(db: Session, offset: int = 0, limit: int = 10) -> List[mode
 
 
 def create_station(db: Session, station: schemas.StationCreate) -> models.Station:
-    db_station = models.Station(location=station.location, token=station.token)
+    db_station = models.Station(
+        location=station.location, token=station.token, hostname=station.hostname
+    )
     db.add(db_station)
     db.commit()
     db.refresh(db_station)
@@ -77,6 +79,14 @@ def create_station(db: Session, station: schemas.StationCreate) -> models.Statio
     for sensor in station.sensors:
         create_station_sensor(db, db_station, sensor)
 
+    return db_station
+
+
+def update_station(db: Session, db_station: models.Station, station: schemas.StationCreate):
+    if db_station.hostname != station.hostname:
+        db_station.hostname != station.hostname
+
+    db.commit()
     return db_station
 
 

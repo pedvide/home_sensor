@@ -45,6 +45,7 @@ def create_station(
     )
 
     if db_station:
+        crud.update_station(db, db_station, station)
         response.status_code = 200
     else:
         db_station = crud.create_station(db, station)

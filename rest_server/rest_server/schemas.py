@@ -38,6 +38,7 @@ class Sensor(SensorBase):
 class StationBase(BaseModel):
     token: str
     location: str
+    hostname: str
 
 
 class StationCreate(StationBase):

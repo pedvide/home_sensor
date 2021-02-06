@@ -117,15 +117,19 @@ def sensor_two():
 
 @pytest.fixture
 def station_one():
-    station1 = dict(token="asf3r23g2v", location="living room")
-    station1_out = dict(id=1, token="asf3r23g2v", location="living room", sensors=[])
+    station1 = dict(token="asf3r23g2v", location="living room", hostname="esp-1.home")
+    station1_out = dict(
+        id=1, token="asf3r23g2v", location="living room", hostname="esp-1.home", sensors=[]
+    )
     return station1, station1_out
 
 
 @pytest.fixture
 def station_two():
-    station2 = dict(token="sfsdgsds", location="bedroom")
-    station2_out = dict(id=2, token="sfsdgsds", location="bedroom", sensors=[])
+    station2 = dict(token="sfsdgsds", location="bedroom", hostname="esp-2.home")
+    station2_out = dict(
+        id=2, token="sfsdgsds", location="bedroom", hostname="esp-2.home", sensors=[]
+    )
     return station2, station2_out
 
 

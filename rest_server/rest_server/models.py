@@ -84,6 +84,7 @@ class Station(Base):
     created_at = Column(DateTime, nullable=False, server_default=text("(CURRENT_TIMESTAMP)"))
     token = Column(String, nullable=False, unique=True)
     location = Column(String, nullable=False)
+    hostname = Column(String, nullable=False, unique=True)
 
     stations_sensors_rel = relationship("StationSensor", back_populates="station")
     _all_sensors = association_proxy("stations_sensors_rel", "sensor")
