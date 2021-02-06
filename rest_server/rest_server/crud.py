@@ -32,12 +32,16 @@ def get_all_sensors(db: Session, offset: int = 0, limit: int = 10) -> List[model
     return db.query(models.Sensor).order_by(models.Sensor.id).limit(limit).offset(offset).all()
 
 
-def get_sensor_by_name(db: Session, name: str) -> Optional[models.Sensor]:
-    return db.query(models.Sensor).filter(models.Sensor.name == name).one_or_none()
+def get_sensor_by_name_and_tag(db: Session, name: str, tag: str = None) -> Optional[models.Sensor]:
+    return (
+        db.query(models.Sensor)
+        .filter(models.Sensor.name == name, models.Sensor.tag == tag)
+        .one_or_none()
+    )
 
 
 def create_sensor(db: Session, sensor: schemas.SensorCreate) -> models.Sensor:
-    db_sensor = models.Sensor(name=sensor.name)
+    db_sensor = models.Sensor(name=sensor.name, tag=sensor.tag)
 
     db_magnitudes = [create_magnitude(db, magnitude_in) for magnitude_in in sensor.magnitudes]
     db_sensor.magnitudes = db_magnitudes

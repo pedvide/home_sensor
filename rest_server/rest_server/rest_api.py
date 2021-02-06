@@ -82,7 +82,7 @@ def create_station_sensor(
         raise HTTPException(404, "Station not found")
 
     # if sensor already exists in sensors, don't duplicate it
-    db_sensor = crud.get_sensor_by_name(db, sensor.name)
+    db_sensor = crud.get_sensor_by_name_and_tag(db, sensor.name, sensor.tag)
     if not db_sensor:
         db_sensor = crud.create_sensor(db, sensor)
 
@@ -122,7 +122,7 @@ def set_station_sensors(
     ]
 
     for sensor in sensors_add:
-        db_sensor = crud.get_sensor_by_name(db, sensor.name)
+        db_sensor = crud.get_sensor_by_name_and_tag(db, sensor.name, sensor.tag)
         if db_sensor:
             crud.add_station_sensor(db, db_station, db_sensor)
         else:

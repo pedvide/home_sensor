@@ -21,6 +21,7 @@ class Magnitude(MagnitudeBase):
 
 class SensorBase(BaseModel):
     name: str
+    tag: str = None
 
 
 class SensorCreate(SensorBase):

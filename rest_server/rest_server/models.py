@@ -1,4 +1,4 @@
-from sqlalchemy import ForeignKey, Column, text
+from sqlalchemy import ForeignKey, Column, text, UniqueConstraint
 from sqlalchemy import Integer, String, Float, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -55,9 +55,10 @@ class Sensor(Base):
     __tablename__ = "sensors"
     id = Column(Integer, primary_key=True, index=True)
 
-    name = Column(String, unique=True, index=True, nullable=False)
+    name = Column(String, index=True, nullable=False)
     vendor = Column(String, nullable=True)
     created_at = Column(DateTime, nullable=False, server_default=text("(CURRENT_TIMESTAMP)"))
+    tag = Column(String, nullable=True)
 
     stations_sensors_rel = relationship("StationSensor", back_populates="sensor")
     _all_stations = association_proxy("stations_sensors_rel", "station")
@@ -72,6 +73,8 @@ class Sensor(Base):
         ]
 
     magnitudes = relationship("Magnitude", back_populates="sensor")
+
+    __table_args__ = (UniqueConstraint("name", "tag", name="sensors_unique_name_tag"),)
 
     def __repr__(self):
         return f"Sensor(id={self.id}, name={self.name})"

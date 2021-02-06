@@ -103,15 +103,17 @@ def sensor_one():
     mag1 = dict(name="temp", unit="C", precision=0.1)
     mag2 = dict(name="hum", unit="%", precision=0.5)
     sensor1 = dict(name="am2320", magnitudes=[mag1, mag2])
-    sensor1_out = dict(id=1, name="am2320", magnitudes=[dict(id=1, **mag1), dict(id=2, **mag2)])
+    sensor1_out = dict(
+        id=1, name="am2320", magnitudes=[dict(id=1, **mag1), dict(id=2, **mag2)], tag=None
+    )
     return sensor1, sensor1_out
 
 
 @pytest.fixture
 def sensor_two():
     mag3 = dict(name="temp", unit="C", precision=0.05)
-    sensor2 = dict(name="high_res_temp", magnitudes=[mag3])
-    sensor2_out = dict(id=2, name="high_res_temp", magnitudes=[dict(id=3, **mag3)])
+    sensor2 = dict(name="high_res_temp", magnitudes=[mag3], tag="1")
+    sensor2_out = dict(id=2, name="high_res_temp", magnitudes=[dict(id=3, **mag3)], tag="1")
     return sensor2, sensor2_out
 
 
