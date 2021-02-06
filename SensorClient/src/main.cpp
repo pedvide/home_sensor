@@ -626,6 +626,7 @@ bool setup_station() {
 
   station_json["token"] = mac_sha;
   station_json["location"] = location;
+  station_json["hostname"] = hostname;
 
   // Serialize JSON document
   String station_data;
