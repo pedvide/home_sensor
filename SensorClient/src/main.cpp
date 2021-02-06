@@ -1,6 +1,7 @@
 
 #include "ESPAsyncTCP.h"
 #include "ESPAsyncWebServer.h"
+#include "LittleFS.h"
 #include <ArduinoOTA.h>
 #include <ESP8266HTTPClient.h>
 #include <ESP8266WiFi.h>
@@ -41,69 +42,12 @@ const char web_server_html_header[] PROGMEM = R"=====(
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" type="text/css" href="style.css">
 <title>ESP8266 Home Sensor Station %s</title>
-<style>
-body {
-  font-size: 1.2vw;
-  display: grid;
-  place-items: flex-start;
-}
-
-a {
-  transition: color .4s;
-  color: #265C83;
-}
-a:link,
-a:visited { color: #265C83; }
-a:hover   { color: #0074D9; }
-a:active  {
-  transition: color .3s;
-  color: #007BE6;
-}
-
-a.button {
-  background-color: #555555; /* gray */
-  border: none;
-  color: white;
-  padding: 0.25em 1em;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 1.3vw;
-}
-#btn-restart.button {background-color: #F44336;} /* red */
-#btn-restart.button:hover {background-color: #555555;}
-#btn-blink.button {background-color: #008CBA;} /* blue */
-#btn-blink.button:hover {background-color: #555555;}
-#btn-dashboard.button {background-color: #f97500;} /* orange-ish */
-#btn-dashboard.button:hover {background-color: #555555;}
-
-div.button-bar {
-  display: flex;
-  margin-left: 0em;
-  margin-right: 1em;
-}
-div.button-holder {
-  flex: 0 0 25%%;
-  padding-left: 1em;
-  padding-right: 1em;
-}
-
-ol {
-  list-style: none;
-  padding-left: 1em;
-}
-ol.header-log {font-weight: bold;}
-/* ol.main-log {} */
-/* li.log-msg {} */
-
-time.log-dt {font-size: smaller;}
-/* span.log-text {} */
-</style>
 </head>
 <body>
 <header>
-<h2>ESP8266 home-sensor station <a href='http://%s'>%s</a></h2>
+<h1>ESP8266 home-sensor station <a href='http://%s'>%s</a></h1>
 <h3>Located in the %s.</h3>
 <div class="button-bar">
   <div class="button-holder">
@@ -114,6 +58,9 @@ time.log-dt {font-size: smaller;}
   </div>
   <div class="button-holder">
     <a class='button' id='btn-dashboard' href='http://home-sensor.home/grafana/d/h45MReWRk/home-sensor?orgId=1&refresh=5m' target="_blank">Dashboard</a>
+  </div>
+  <div class="button-holder">
+    <a class='button' id='btn-homesensor' href='http://home-sensor.home' target="_blank">All Stations</a>
   </div>
 </div>
 </header>
@@ -606,7 +553,10 @@ void connect_to_wifi() {
 }
 
 void setup_OTA() {
-  ArduinoOTA.onStart([]() { log_println(F("Starting the OTA update.")); });
+  ArduinoOTA.onStart([]() {
+    LittleFS.end();
+    log_println(F("Starting the OTA update."));
+  });
 
   ArduinoOTA.onEnd([]() { log_println(F("Finished the OTA update.")); });
 
@@ -850,7 +800,7 @@ void setup_web_server() {
         String msg = String(log_header_buffer[i].message);
         msg.replace("  ", "&nbsp;&nbsp;");
         msg.replace("\n", "");
-        response->printf("<li class='log-msg'><time class='log-dt'>%s</time> - "
+        response->printf("<li class='log-msg'><time class='log-dt'>%s</time> "
                          "<span class='log-text'>%s</span></li>\n",
                          Amsterdam.dateTime(log_header_buffer[i].epoch).c_str(),
                          msg.c_str());
@@ -865,7 +815,7 @@ void setup_web_server() {
         String msg = String(log_buffer[i].message);
         msg.replace("  ", "&nbsp;&nbsp;");
         msg.replace("\n", "");
-        response->printf("<li class='log-msg'><time class='log-dt'>%s</time> - "
+        response->printf("<li class='log-msg'><time class='log-dt'>%s</time> "
                          "<span class='log-text'>%s</span></li>\n",
                          Amsterdam.dateTime(log_buffer[i].epoch).c_str(),
                          msg.c_str());
@@ -875,6 +825,10 @@ void setup_web_server() {
     response->println(F("</ol>\n</main>"));
     response->printf_P(web_server_html_footer);
     request->send(response);
+  });
+
+  web_server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send(LittleFS, "/style.css", "text/css");
   });
 
   web_server.on("/restart", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -1006,6 +960,8 @@ void setup() {
   Serial.begin(115200);
 
   Wire.begin();
+
+  LittleFS.begin();
 
   log_header_printf("Last restart due to %s.", ESP.getResetReason().c_str());
   log_header_printf("CPU freq: %d MHz, Flash size: %d kB, Sketch size: %d kB "
