@@ -1,7 +1,17 @@
 <template>
   <div @click="showSensors = !showSensors" class="card">
     <div class="content">
-      <h4>Station {{ station.id }}</h4>
+      <h4>
+        Station {{ station.id }}
+        <a
+          @click.stop
+          :href="'http://' + station.hostname + '.home'"
+          target="_blank"
+          style="float: right"
+        >
+          Logs
+        </a>
+      </h4>
       <p>Located at the {{ station.location }}</p>
       <transition name="sensors">
         <ol v-if="showSensors" @click.stop class="list">
