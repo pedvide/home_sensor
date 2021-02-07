@@ -842,6 +842,10 @@ void setup_web_server() {
     request->redirect("/");
   });
 
+  web_server.on("/health", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send(200, F("text/plain"), F("Ok"));
+  });
+
   web_server.onNotFound([](AsyncWebServerRequest *request) {
     Serial.println(F("404."));
     request->send(404, F("text/plain"), F("Not found"));
