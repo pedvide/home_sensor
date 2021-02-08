@@ -2,6 +2,9 @@
   <div @click="showSensors = !showSensors" class="card">
     <div class="content">
       <h4>
+        <span :class="`station-status ${health ? 'active' : 'inactive'}`">
+          ●
+        </span>
         Station {{ station.id }}
         <a
           @click.stop
@@ -78,5 +81,16 @@ export default {
 .sensors-enter,
 .sensors-leave-to {
   opacity: 0;
+}
+
+.station-status {
+  position: relative;
+  top: -0.1em;
+}
+.station-status.active {
+  color: green;
+}
+.station-status.inactive {
+  color: red;
 }
 </style>
