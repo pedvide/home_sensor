@@ -13,7 +13,7 @@
 </template>
 
 <script>
-import fetchData from "@/utils/api_query";
+import { fetchData } from "@/utils/api_query";
 import Measurement from "@/components/Measurement.vue";
 
 export default {

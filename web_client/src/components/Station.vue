@@ -25,6 +25,7 @@
 </template>
 
 <script>
+import { checkHealth } from "@/utils/api_query";
 import Sensor from "@/components/Sensor.vue";
 
 export default {
@@ -37,11 +38,27 @@ export default {
       default: () => "",
       type: Object,
     },
+    health: {
+      default: () => true,
+      type: Boolean,
+    },
   },
   data() {
     return {
       showSensors: false,
     };
+  },
+  created() {
+    checkHealth.call(this, this.station.hostname);
+    this.checkHealthTimer = setInterval(
+      checkHealth.bind(this),
+      5000,
+      this.station.hostname
+    );
+  },
+  beforeRouteLeave(to, from, next) {
+    clearInterval(this.checkHealthTimer);
+    next();
   },
 };
 </script>

@@ -10,4 +10,14 @@ function fetchData(name, limit = 5) {
     .catch((error) => console.log(error));
 }
 
-export default fetchData;
+function checkHealth(hostname) {
+  const baseURI = `http://${hostname}/health`;
+  axios
+    .get(baseURI)
+    .then((result) => {
+      this.health = result.data === "Ok";
+    })
+    .catch((error) => console.log(error));
+}
+
+export { fetchData, checkHealth };

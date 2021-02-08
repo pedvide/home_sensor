@@ -10,7 +10,7 @@
 
 <script>
 // @ is an alias to /src
-import fetchData from "@/utils/api_query";
+import { fetchData } from "@/utils/api_query";
 import Sensor from "@/components/Sensor.vue";
 
 export default {
