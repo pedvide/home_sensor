@@ -76,7 +76,11 @@ Home Sensor Project
 
 //// Station
 String mac_sha, hostname;
+#ifdef LOCATION
 const char *location PROGMEM = LOCATION;
+#else
+const char *location PROGMEM = "test";
+#endif
 
 //// rest server
 const char *server PROGMEM = SERVER_HOSTNAME;
@@ -843,7 +847,10 @@ void setup_web_server() {
   });
 
   web_server.on("/health", HTTP_GET, [](AsyncWebServerRequest *request) {
-    request->send(200, F("text/plain"), F("Ok"));
+    AsyncWebServerResponse *response =
+        request->beginResponse(200, F("text/plain"), F("Ok"));
+    response->addHeader("Access-Control-Allow-Origin", "*");
+    request->send(response);
   });
 
   web_server.onNotFound([](AsyncWebServerRequest *request) {

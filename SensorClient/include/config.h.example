@@ -4,11 +4,3 @@
 #endif
 
 #define SERVER_HOSTNAME "hostname of the rest_server"
-
-#define LOCATION "location of this station, change for each station!"
-
-// #define HAS_AM2320 // this station has the AM2320 sensor 
-// #define HAS_CCS811
-// #define HAS_HDC1080
-
-// #define DONT_SEND_DATA
