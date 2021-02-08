@@ -76,7 +76,11 @@ Home Sensor Project
 
 //// Station
 String mac_sha, hostname;
+#ifdef LOCATION
 const char *location PROGMEM = LOCATION;
+#else
+const char *location PROGMEM = "test";
+#endif
 
 //// rest server
 const char *server PROGMEM = SERVER_HOSTNAME;
