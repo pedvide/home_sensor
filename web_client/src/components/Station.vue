@@ -41,21 +41,22 @@ export default {
       default: () => "",
       type: Object,
     },
-    health: {
-      default: () => true,
-      type: Boolean,
+    checkHealthInterval: {
+      default: () => 5000,
+      type: Number,
     },
   },
   data() {
     return {
       showSensors: false,
+      health: true,
     };
   },
   created() {
     checkHealth.call(this, this.station.hostname);
     this.checkHealthTimer = setInterval(
       checkHealth.bind(this),
-      5000,
+      this.checkHealthInterval,
       this.station.hostname
     );
   },
