@@ -21,16 +21,15 @@ export default {
   data() {
     return {
       stations: [],
-      refreshTimer: null,
     };
   },
   created() {
     fetchData.call(this, "stations", 20);
-    this.refreshTimer = setInterval(fetchData.bind(this), 1000, "stations", 20);
   },
-  beforeRouteLeave(to, from, next) {
-    clearInterval(this.refreshTimer);
-    next();
+  watch: {
+    $route() {
+      fetchData.call(this, "stations", 20);
+    },
   },
 };
 </script>
