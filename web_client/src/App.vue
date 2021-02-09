@@ -6,7 +6,12 @@
         <router-link to="/">Stations</router-link> |
         <router-link to="/sensors">Sensors</router-link> |
         <router-link to="/measurements">Measurements</router-link> |
-        <router-link to="/about">About</router-link>
+        <a
+          href="http://home-sensor.home/grafana/d/h45MReWRk/home-sensor?orgId=1&refresh=5m"
+          target="_blank"
+        >
+          Dashboard
+        </a>
       </nav>
     </header>
     <router-view />
@@ -49,5 +54,11 @@ nav a {
 
 nav a.router-link-exact-active {
   color: #42b983;
+}
+
+a[href^="http://"]
+{
+  background: url("~@/assets/external-link.png") center right no-repeat;
+  padding-right: 13px;
 }
 </style>
