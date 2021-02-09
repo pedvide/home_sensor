@@ -33,6 +33,7 @@ def get_all_sensors(db: Session, offset: int = 0, limit: int = 10) -> List[model
 
 
 def get_sensor_by_name_and_tag(db: Session, name: str, tag: str = None) -> Optional[models.Sensor]:
+    tag = tag or ""
     return (
         db.query(models.Sensor)
         .filter(models.Sensor.name == name, models.Sensor.tag == tag)
