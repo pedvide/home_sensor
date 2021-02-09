@@ -15,9 +15,11 @@ function checkHealth(hostname) {
   axios
     .get(baseURI)
     .then((result) => {
-      this.health = result.data === "Ok";
+      this.health = result.data === "Ok" || result.data.status === "Ok";
     })
-    .catch((error) => console.log(error));
+    .catch(() => {
+      this.health = false;
+    });
 }
 
 export { fetchData, checkHealth };
