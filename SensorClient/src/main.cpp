@@ -87,7 +87,6 @@ const char *server PROGMEM = SERVER_HOSTNAME;
 const char *stations_endpoint PROGMEM = "/api/stations";
 String station_endpoint, sensors_endpoint;
 uint8_t station_id;
-const uint8_t NUM_SENSORS = 3;
 const uint8_t port = 80;
 uint8 num_sending_measurement_errors = 0;
 
