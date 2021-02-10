@@ -29,6 +29,10 @@
 #include "ClosedCube_HDC1080.h" // HDC1080 library
 #endif
 
+#ifdef HAS_HP303B
+#include <LOLIN_HP303B.h>
+#endif
+
 //// WiFi
 const char *ssid PROGMEM = STASSID;
 const char *password PROGMEM = STAPSK;
@@ -514,6 +518,155 @@ Ticker hdc1080_measurement_timer(measure_hdc1080_sensor, hdc1080_period_s * 1e3,
                                  0, MILLIS);
 #endif
 
+#ifdef HAS_HP303B
+// HP303B Sensor
+uint8_t hp303b_sensor_id, hp303b_temp_id, hp303b_pres_id;
+const char *sensor_hp303b_name PROGMEM = "HP303B";
+LOLIN_HP303B hp303b;
+const uint32_t hp303b_period_s = 10;
+const size_t capacity_hp303b =
+    JSON_ARRAY_SIZE(2) + JSON_OBJECT_SIZE(2) + 2 * JSON_OBJECT_SIZE(3);
+const size_t response_capacity_hp303b =
+    JSON_ARRAY_SIZE(2) + JSON_OBJECT_SIZE(3) + 2 * JSON_OBJECT_SIZE(4);
+
+void setup_hp303b_sensor_json(JsonObject &sensor_json) {
+  sensor_json["name"] = sensor_hp303b_name;
+  JsonArray sensor_1_in_magnitudes =
+      sensor_json.createNestedArray("magnitudes");
+
+  JsonObject mag1_in = sensor_1_in_magnitudes.createNestedObject();
+  mag1_in["name"] = "temperature";
+  mag1_in["unit"] = "C";
+  mag1_in["precision"] = 0.5;
+
+  JsonObject mag2_in = sensor_1_in_magnitudes.createNestedObject();
+  mag2_in["name"] = "pressure";
+  mag2_in["unit"] = "Pa";
+  mag2_in["precision"] = 10;
+}
+
+bool parse_hp303b_sensor_json(JsonObject &sensor_json_response) {
+  hp303b_sensor_id = sensor_json_response["id"];
+  JsonArray magnitudes_json =
+      sensor_json_response["magnitudes"].as<JsonArray>();
+  for (JsonObject mag_json : magnitudes_json) {
+    const char *name = mag_json["name"];
+    if (strcmp(name, "temperature") == 0) {
+      hp303b_temp_id = mag_json["id"];
+    } else if (strcmp(name, "pressure") == 0) {
+      hp303b_pres_id = mag_json["id"];
+    }
+  }
+  log_printf(
+      "  hp303b_sensor_id: %d, hp303b_temp_id: %d, hp303b_pres_id: %d.\n",
+      hp303b_sensor_id, hp303b_temp_id, hp303b_pres_id);
+  log_header_printf(
+      "  HP303B sensor_id: %d, temperature_id: %d, pressure_id: %d.",
+      hp303b_sensor_id, hp303b_temp_id, hp303b_pres_id);
+
+  return true;
+}
+
+bool setup_hp303b_sensor() {
+  log_println("Setting up HP303B sensor...");
+  hp303b.begin();
+  delay(500);
+
+  log_printf("  Product ID: %d.\n"
+             "  Revision ID: %d.\n"
+             "  Done!\n",
+             hp303b.getProductId(), hp303b.getRevisionId());
+  log_header_printf("HP303B setup. product ID: %d, "
+                    "revision ID: %d.",
+                    hp303b.getProductId(), hp303b.getRevisionId());
+
+  return true;
+}
+
+void measure_hp303b_sensor() {
+  log_println("Measuring HP303B...");
+  const uint8_t oversampling = 7;
+  int conversion_ret_val;
+  time_t now = UTC.now();
+  int temperature, pressure;
+  int status;
+
+  status = hp303b.measureTempOnce(temperature, oversampling);
+  switch (status) {
+  case HP303B__SUCCEEDED:
+    break;
+  case HP303B__FAIL_UNKNOWN:
+    log_println("  Unknown error reading HP303B.");
+    num_measurement_errors++;
+    break;
+  case HP303B__FAIL_INIT_FAILED:
+    log_println("  Initialization error reading HP303B.");
+    num_measurement_errors++;
+    break;
+  case HP303B__FAIL_TOOBUSY:
+    log_println("  Error: HP303B is busy.");
+    num_measurement_errors++;
+    break;
+  case HP303B__FAIL_UNFINISHED:
+    log_println("  Error: HP303B could not finish the measurement on time.");
+    num_measurement_errors++;
+    break;
+  }
+  SensorData temperature_data = {now, hp303b_sensor_id, hp303b_temp_id};
+  conversion_ret_val =
+      snprintf(temperature_data.value, sizeof(temperature_data.value), "%d",
+               temperature);
+  if (conversion_ret_val > 0) {
+    log_printf("  Temperature: %d C.\n", temperature);
+    sensor_buffer.push(temperature_data);
+    if (num_measurement_errors > 0) {
+      num_measurement_errors--;
+    }
+  } else {
+    log_printf("  Problem converting temperature (%d C) to char[].\n",
+               temperature);
+  }
+
+  status = hp303b.measurePressureOnce(pressure, oversampling);
+  switch (status) {
+  case HP303B__SUCCEEDED:
+    break;
+  case HP303B__FAIL_UNKNOWN:
+    log_println("  Unknown error reading HP303B.");
+    num_measurement_errors++;
+    break;
+  case HP303B__FAIL_INIT_FAILED:
+    log_println("  Initialization error reading HP303B.");
+    num_measurement_errors++;
+    break;
+  case HP303B__FAIL_TOOBUSY:
+    log_println("  Error: HP303B is busy.");
+    num_measurement_errors++;
+    break;
+  case HP303B__FAIL_UNFINISHED:
+    log_println("  Error: HP303B could not finish the measurement on time.");
+    num_measurement_errors++;
+    break;
+  }
+  SensorData pressure_data = {now, hp303b_sensor_id, hp303b_pres_id};
+  conversion_ret_val = snprintf(pressure_data.value,
+                                sizeof(pressure_data.value), "%d", pressure);
+  if (conversion_ret_val > 0) {
+    log_printf("  Pressure: %d hPa.\n", pressure / 100);
+    sensor_buffer.push(pressure_data);
+    if (num_measurement_errors > 0) {
+      num_measurement_errors--;
+    }
+  } else {
+    log_printf("  Problem converting pressure (%d hPa) to char[].\n",
+               pressure / 100);
+  }
+}
+
+Ticker hp303b_measurement_timer(measure_hp303b_sensor, hp303b_period_s * 1e3, 0,
+                                MILLIS);
+#endif
+
 //// Post request
 WiFiClient client;
 HTTPClient http;
@@ -689,6 +842,9 @@ bool setup_sensors() {
 #ifdef HAS_HDC1080
   capacity += capacity_hdc1080;
 #endif
+#ifdef HAS_HP303B
+  capacity += capacity_hp303b;
+#endif
   DynamicJsonDocument sensors_json(capacity + 200);
 
   size_t response_capacity = JSON_ARRAY_SIZE(NUM_SENSORS);
@@ -700,6 +856,9 @@ bool setup_sensors() {
 #endif
 #ifdef HAS_HDC1080
   response_capacity += response_capacity_hdc1080;
+#endif
+#ifdef HAS_HP303B
+  response_capacity += response_capacity_hp303b;
 #endif
   DynamicJsonDocument sensors_json_response(response_capacity + 200);
 
@@ -714,6 +873,10 @@ bool setup_sensors() {
 #ifdef HAS_HDC1080
   JsonObject hdc1080_json = sensors_json.createNestedObject();
   setup_hdc1080_sensor_json(hdc1080_json);
+#endif
+#ifdef HAS_HP303B
+  JsonObject hp303b_json = sensors_json.createNestedObject();
+  setup_hp303b_sensor_json(hp303b_json);
 #endif
 
   // Serialize JSON document
@@ -763,6 +926,11 @@ bool setup_sensors() {
       parse_hdc1080_sensor_json(sensor_json);
     }
 #endif
+#ifdef HAS_HP303B
+    if (strcmp(name, sensor_hp303b_name) == 0) {
+      parse_hp303b_sensor_json(sensor_json);
+    }
+#endif
   }
 
   return true;
@@ -780,6 +948,10 @@ bool setup_internal_sensors() {
 
 #ifdef HAS_CCS811
   res = res && setup_ccs811_sensor();
+#endif
+
+#ifdef HAS_HP303B
+  res = res && setup_hp303b_sensor();
 #endif
 
   return res;
@@ -1007,6 +1179,9 @@ void setup() {
 #ifdef HAS_HDC1080
   hdc1080_measurement_timer.start();
 #endif
+#ifdef HAS_HP303B
+  hp303b_measurement_timer.start();
+#endif
   send_timer.start();
 
   digitalWrite(LED_BUILTIN, HIGH); // LED pin is active low
@@ -1042,6 +1217,9 @@ void loop() {
 #endif
 #ifdef HAS_HDC1080
   hdc1080_measurement_timer.update();
+#endif
+#ifdef HAS_HP303B
+  hp303b_measurement_timer.update();
 #endif
   send_timer.update();
 }
