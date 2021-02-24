@@ -27,12 +27,12 @@ export default {
   },
 
   created() {
-    fetchData.call(this, "measurements", 10);
+    fetchData.call(this, "measurements", 20);
     this.refreshTimer = setInterval(
       fetchData.bind(this),
       750,
       "measurements",
-      10
+      20
     );
   },
 
