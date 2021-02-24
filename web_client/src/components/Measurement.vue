@@ -12,8 +12,7 @@
       </h5>
       <p>
         {{ m.magnitude.name[0].toUpperCase() + m.magnitude.name.substring(1) }}
-        {{ parseFloat(m.value).toFixed(-Math.log10(m.magnitude.precision)) }}
-        {{ m.magnitude.unit }}
+        {{ m.magnitude.unit === "C" ? "°C" : m.magnitude.unit }}
       </p>
     </div>
   </div>
