@@ -45,4 +45,19 @@ export default {
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
 @import "../assets/card.css";
+
+@media only screen and (min-width: 961px) {
+  .card {
+    width: 375px;
+  }
+  .content {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+  }
+  .content > h5 {
+    margin-right: 10px;
+  }
+}
 </style>
