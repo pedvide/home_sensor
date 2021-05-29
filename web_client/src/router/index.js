@@ -17,7 +17,7 @@ const routes = [
     component: () => import("../views/Measurements.vue"),
   },
   {
-    path: "*",
+    path: "/:pathMatch(.*)*",
     name: "404",
     component: () => import(/* webpackChunkName: "404" */ "../views/404.vue"),
   },
