@@ -38,7 +38,7 @@ export default {
   },
   props: {
     station: {
-      default: () => "",
+      default: () => {},
       type: Object,
     },
     checkHealthInterval: {

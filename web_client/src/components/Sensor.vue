@@ -26,7 +26,7 @@ export default {
   name: "Sensor",
   props: {
     sensor: {
-      default: () => "",
+      default: () => {},
       type: Object,
     },
   },
