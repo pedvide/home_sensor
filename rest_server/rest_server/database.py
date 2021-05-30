@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import Session  # noqa: F401
 from pathlib import Path
 
-from influxdb import InfluxDBClient
+from influxdb_client import InfluxDBClient
 
 
 database_file = "sql_app.db"
@@ -31,10 +31,8 @@ def get_db():
 
 def get_influx_db():
     try:
-        client = InfluxDBClient(
-            host="influxdb", port=8086, username="homesensor", password="homesensor123"
-        )
-        client.switch_database("home_sensor")
+        token = "homesensor:homesensor123"
+        client = InfluxDBClient(url="influxdb", port=8086, token=token, org="-")
         yield client
     finally:
         client.close()

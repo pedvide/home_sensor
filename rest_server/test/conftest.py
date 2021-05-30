@@ -11,7 +11,10 @@ from rest_server.database import (
 from fastapi.testclient import TestClient
 
 from pathlib import Path
+import shutil
 import pytest
+import requests
+import datetime
 
 from xprocess import ProcessStarter
 
@@ -20,11 +23,20 @@ from xprocess import ProcessStarter
 def influxdb_server(xprocess):
     class Starter(ProcessStarter):
         pattern = "Listening for signals"
-        args = ["influxd", "run", "-config", "/dev/null"]
+        args = ["influxd", "run", "-config", "/etc/influxdb/influxdb.conf"]
 
+    influxdb_data = "/tmp/influxdb/"
+    if Path(influxdb_data).exists():
+        shutil.rmtree(influxdb_data, ignore_errors=True)
     xprocess.ensure("influxd", Starter)
+    response = requests.post(
+        "http://localhost:8086/query", data={"q": "CREATE DATABASE home_sensor"}
+    )
+    response.raise_for_status()
     yield
     xprocess.getinfo("influxd").terminate()
+    if Path(influxdb_data).exists():
+        shutil.rmtree(influxdb_data, ignore_errors=True)
 
 
 database_file = "test_sql_app.db"
@@ -65,9 +77,11 @@ def db_session(db_engine, influxdb_server):
 
     def override_get_influx_db():
         try:
-            client = InfluxDBClient(host="localhost", port=8086, username="homesensor", password="")
-            client.create_database("testing")
-            client.switch_database("testing")
+            client = InfluxDBClient(url="127.0.0.1:8086", token=":", org="-")
+            response = requests.post(
+                "http://localhost:8086/query", data={"q": "CREATE DATABASE home_sensor"}
+            )
+            response.raise_for_status()
             yield client
         finally:
             client.close()
@@ -87,9 +101,11 @@ def db_session(db_engine, influxdb_server):
         transaction.rollback()
         connection.close()
 
-        client = InfluxDBClient(host="localhost", port=8086, username="homesensor", password="")
-        client.drop_database("testing")
-        client.close()
+        with InfluxDBClient(url="127.0.0.1:8086", token=":", org="-") as _:
+            response = requests.post(
+                "http://localhost:8086/query", data={"q": "DROP DATABASE home_sensor"}
+            )
+            response.raise_for_status()
 
 
 @pytest.fixture(scope="session")
@@ -141,8 +157,10 @@ def measurement_one(station_one, sensor_one):
     sensor_in, sensor_out = sensor_one
     magnitude_out = sensor_out["magnitudes"][0]
 
+    now = int(datetime.datetime.now().timestamp())
+
     m1_in = dict(
-        timestamp=1589231767,
+        timestamp=now,
         magnitude_id=magnitude_out["id"],
         sensor_id=sensor_out["id"],
         value="25.3",
@@ -152,7 +170,7 @@ def measurement_one(station_one, sensor_one):
         station_id=station_out["id"],
         sensor_id=sensor_out["id"],
         magnitude=magnitude_out,
-        timestamp=1589231767,
+        timestamp=now,
         value="25.3",
     )
 
@@ -165,8 +183,10 @@ def measurement_two(station_one, sensor_one):
     sensor_in, sensor_out = sensor_one
     magnitude_out = sensor_out["magnitudes"][0]
 
+    now = int(datetime.datetime.now().timestamp())
+
     m2_in = dict(
-        timestamp=1589231900,
+        timestamp=now,
         magnitude_id=magnitude_out["id"],
         sensor_id=sensor_out["id"],
         value="20.3",
@@ -176,7 +196,7 @@ def measurement_two(station_one, sensor_one):
         station_id=station_out["id"],
         sensor_id=sensor_out["id"],
         magnitude=magnitude_out,
-        timestamp=1589231900,
+        timestamp=now,
         value="20.3",
     )
 

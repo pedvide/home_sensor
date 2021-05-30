@@ -3,6 +3,8 @@ from .database import Session, InfluxDBClient
 from typing import List, Optional
 from datetime import datetime
 
+from influxdb_client import Point
+
 # from pprint import pprint
 
 
@@ -144,12 +146,13 @@ def delete_station_sensor(
     db.commit()
 
 
-def transform_measurement(db: Session, db_measurement: dict):
+def transform_measurement(db: Session, record_values: dict):
     """Enrich the influxdb measurement to adapt to schema"""
     return {
-        **db_measurement,
-        "timestamp": db_measurement["time"],
-        "magnitude": get_magnitude(db, db_measurement["magnitude_id"]),
+        **record_values,
+        "value": record_values["_value"],
+        "timestamp": int(record_values["_time"].timestamp()),
+        "magnitude": get_magnitude(db, record_values["magnitude_id"]),
     }
 
 
@@ -160,13 +163,24 @@ def get_station_measurements(
     offset: int = 0,
     limit: int = 10,
 ):
-    db_measurements = db_influx.query(
-        f"SELECT * FROM raw_data WHERE station_id='{station_id}' "
-        f"ORDER BY time DESC LIMIT {limit} OFFSET {offset}",
-        epoch="s",
-    ).get_points()
+    bucket = "home_sensor/autogen"
+    query_api = db_influx.query_api()
+    tables = query_api.query(
+        f"""
+    from(bucket: "{bucket}")
+    |> range(start: -15d)
+    |> filter(
+        fn:(r) => r._measurement == "raw_data" and
+                  r.station_id == "{station_id}"
+       )
+    |> sort(desc: true)
+    |> limit(n: {limit}, offset: {offset})
+    """
+    )
 
-    measurements = [transform_measurement(db, db_measurement) for db_measurement in db_measurements]
+    measurements = [
+        transform_measurement(db, record.values) for table in tables for record in table
+    ]
     return measurements
 
 
@@ -178,12 +192,21 @@ def get_all_measurements(
     offset: int = 0,
     limit: int = 10,
 ):
-    db_measurements = db_influx.query(
-        f"SELECT * FROM raw_data ORDER BY time DESC LIMIT {limit} OFFSET {offset}",
-        epoch="s",
-    ).get_points()
+    bucket = "home_sensor/autogen"
+    query_api = db_influx.query_api()
+    tables = query_api.query(
+        f"""
+    from(bucket: "{bucket}")
+    |> range(start: 0)
+    |> filter(fn:(r) => r._measurement == "raw_data")
+    |> sort(desc: true)
+    |> limit(n: {limit}, offset: {offset})
+    """
+    )
 
-    measurements = [transform_measurement(db, db_measurement) for db_measurement in db_measurements]
+    measurements = [
+        transform_measurement(db, record.values) for table in tables for record in table
+    ]
     return measurements
 
 
@@ -194,7 +217,7 @@ def create_measurements(
     measurements: List[schemas.MeasurementCreate],
 ):
     """Create measurements and send it to influxdb"""
-    json_measurements = []
+    point_measurements = []
     response_measurements = []
 
     for measurement in measurements:
@@ -208,21 +231,19 @@ def create_measurements(
         sensor_id = str(measurement.sensor_id)
         sensor = get_sensor(db, sensor_id)
 
-        json_measurement = {
-            "measurement": "raw_data",
-            "time": time,
-            "fields": {"value": value},
-            "tags": dict(
-                station_id=station_id,
-                station_location=station.location,
-                station_token=station.token,
-                magnitude_id=magnitude_id,
-                magnitude_name=magnitude.name,
-                sensor_id=sensor_id,
-                sensor_name=sensor.name,
-            ),
-        }
-        json_measurements.append(json_measurement)
+        point_measurement = (
+            Point("raw_data")
+            .time(time, write_precision="s")
+            .tag("station_id", station_id)
+            .tag("station_location", station.location)
+            .tag("station_token", station.token)
+            .tag("magnitude_id", magnitude_id)
+            .tag("magnitude_name", magnitude.name)
+            .tag("sensor_id", sensor_id)
+            .tag("sensor_name", sensor.name)
+            .field("value", value)
+        )
+        point_measurements.append(point_measurement)
         response_measurements.append(
             dict(
                 station_id=station_id,
@@ -231,7 +252,10 @@ def create_measurements(
             )
         )
 
-    if db_influx.write_points(json_measurements, time_precision="s"):
-        return response_measurements
+    try:
+        with db_influx.write_api() as write_api:
+            write_api.write(bucket="home_sensor/autogen", record=point_measurements)
+    except Exception as e:
+        raise InfluxDBError("Error writing a measurement") from e
     else:
-        raise InfluxDBError("Error writing a measurement")
+        return response_measurements
