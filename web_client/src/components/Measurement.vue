@@ -24,7 +24,7 @@ export default {
   name: "Measurement",
   props: {
     m: {
-      default: () => "",
+      default: () => {},
       type: Object,
     },
   },
