@@ -36,7 +36,7 @@ def get_db():
 def get_influx_db():
     try:
         client = InfluxDBClient(
-                url=f"http://{INFLUXDB_URL}:{INFLUXDB_PORT}", token=INFLUXDB_TOKEN, org=INFLUXDB_ORG
+            url=f"http://{INFLUXDB_URL}:{INFLUXDB_PORT}", token=INFLUXDB_TOKEN, org=INFLUXDB_ORG
         )
         yield client
     finally:
