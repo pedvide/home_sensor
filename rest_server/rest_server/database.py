@@ -7,7 +7,7 @@ import os
 from influxdb_client import InfluxDBClient
 
 INFLUXDB_URL = os.environ["INFLUXDB_URL"]  # influxdb
-INFLUXDB_PORT = os.environ["INFLUXDB_PORT"]  # 8086
+INFLUXDB_PORT = int(os.environ["INFLUXDB_PORT"])  # 8086
 INFLUXDB_TOKEN = os.environ["INFLUXDB_TOKEN"]  # homesensor:homesensor123
 INFLUXDB_ORG = os.environ["INFLUXDB_ORG"]  # -
 INFLUXDB_BUCKET = os.environ["INFLUXDB_BUCKET"]  # home_sensor/autogen
@@ -36,7 +36,7 @@ def get_db():
 def get_influx_db():
     try:
         client = InfluxDBClient(
-            url=INFLUXDB_URL, port=INFLUXDB_PORT, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG
+                url=f"http://{INFLUXDB_URL}:{INFLUXDB_PORT}", token=INFLUXDB_TOKEN, org=INFLUXDB_ORG
         )
         yield client
     finally:
