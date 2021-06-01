@@ -13,6 +13,8 @@ services:
     image:  home-sensor/server
     environment:
       - MAX_WORKERS=4
+    env_file:
+      - .env
     volumes:
       - ./rest_server/data:/var/lib/home-sensor
     expose:
