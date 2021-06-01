@@ -2,14 +2,18 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import Session  # noqa: F401
-from pathlib import Path
+import os
 
 from influxdb_client import InfluxDBClient
 
+INFLUXDB_URL = os.environ["INFLUXDB_URL"]  # influxdb
+INFLUXDB_PORT = os.environ["INFLUXDB_PORT"]  # 8086
+INFLUXDB_TOKEN = os.environ["INFLUXDB_TOKEN"]  # homesensor:homesensor123
+INFLUXDB_ORG = os.environ["INFLUXDB_ORG"]  # -
+INFLUXDB_BUCKET = os.environ["INFLUXDB_BUCKET"]  # home_sensor/autogen
 
-database_file = "sql_app.db"
-database_path = Path("/var/lib/home-sensor") / database_file
-SQLALCHEMY_DATABASE_URL = f"sqlite:///{database_path}"
+# sqlite:////var/lib/home-sensor/sql_app.db
+SQLALCHEMY_DATABASE_URL = os.environ["SQLALCHEMY_DATABASE_URL"]
 # SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 
 Base = declarative_base()
@@ -31,8 +35,9 @@ def get_db():
 
 def get_influx_db():
     try:
-        token = "homesensor:homesensor123"
-        client = InfluxDBClient(url="influxdb", port=8086, token=token, org="-")
+        client = InfluxDBClient(
+            url=INFLUXDB_URL, port=INFLUXDB_PORT, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG
+        )
         yield client
     finally:
         client.close()

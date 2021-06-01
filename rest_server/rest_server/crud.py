@@ -1,5 +1,5 @@
 from . import models, schemas
-from .database import Session, InfluxDBClient
+from .database import Session, InfluxDBClient, INFLUXDB_BUCKET
 from typing import List, Optional
 from datetime import datetime
 
@@ -163,11 +163,10 @@ def get_station_measurements(
     offset: int = 0,
     limit: int = 10,
 ):
-    bucket = "home_sensor/autogen"
     query_api = db_influx.query_api()
     tables = query_api.query(
         f"""
-    from(bucket: "{bucket}")
+    from(bucket: "{INFLUXDB_BUCKET}")
     |> range(start: -15d)
     |> filter(
         fn:(r) => r._measurement == "raw_data" and
@@ -192,11 +191,10 @@ def get_all_measurements(
     offset: int = 0,
     limit: int = 10,
 ):
-    bucket = "home_sensor/autogen"
     query_api = db_influx.query_api()
     tables = query_api.query(
         f"""
-    from(bucket: "{bucket}")
+    from(bucket: "{INFLUXDB_BUCKET}")
     |> range(start: 0)
     |> filter(fn:(r) => r._measurement == "raw_data")
     |> sort(desc: true)
@@ -254,7 +252,7 @@ def create_measurements(
 
     try:
         with db_influx.write_api() as write_api:
-            write_api.write(bucket="home_sensor/autogen", record=point_measurements)
+            write_api.write(bucket=INFLUXDB_BUCKET, record=point_measurements)
     except Exception as e:
         raise InfluxDBError("Error writing a measurement") from e
     else:
