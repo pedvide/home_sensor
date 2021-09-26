@@ -24,11 +24,8 @@ services:
       - traefik
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.home-sensor-server.rule=PathPrefix(`/api`)"
+      - "traefik.http.routers.home-sensor-server.rule=Host(`home-sensor.home`, `home-sensor`) && PathPrefix(`/api`)"
       - "traefik.http.routers.home-sensor-server.entrypoints=web"
-      - "traefik.http.routers.home-sensor-server-secure.rule=Host(`home-sensor.home`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.home-sensor-server-secure.entrypoints=websecure"
-      - "traefik.http.routers.home-sensor-server-secure.tls"
       - "traefik.docker.network=traefik"
     restart: unless-stopped
 
@@ -44,11 +41,8 @@ services:
     restart: unless-stopped
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.home-sensor-web.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.home-sensor-web.rule=Host(`home-sensor.home`, `home-sensor`) && PathPrefix(`/`)"
       - "traefik.http.routers.home-sensor-web.entrypoints=web"
-      - "traefik.http.routers.home-sensor-web-secure.rule=Host(`home-sensor.home`) && PathPrefix(`/`)"
-      - "traefik.http.routers.home-sensor-web-secure.entrypoints=websecure"
-      - "traefik.http.routers.home-sensor-web-secure.tls"
       - "traefik.docker.network=traefik"
     depends_on:
       - server
