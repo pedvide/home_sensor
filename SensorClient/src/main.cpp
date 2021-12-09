@@ -747,13 +747,14 @@ void setup_OTA() {
 bool connect_to_time() {
   log_println(F("Connecting to time server"));
   setDebug(ezDebugLevel_t::INFO);
+  setServer(NTP_SERVER_HOSTNAME);
 
   if (!Amsterdam.setCache(0)) {
     Amsterdam.setLocation("Europe/Berlin");
   }
   Amsterdam.setDefault();
 
-  if (!waitForSync(5)) {
+  if (!waitForSync(10)) {
     return false;
   }
   setInterval(60 * 60); // 1h in seconds

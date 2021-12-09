@@ -4,3 +4,4 @@
 #endif
 
 #define SERVER_HOSTNAME "hostname of the rest_server"
+#define NTP_SERVER_HOSTNAME "pool.ntp.org"
