@@ -1118,7 +1118,7 @@ void send_data() {
 #endif
 
 void retry(std::function<bool()> func, const __FlashStringHelper *info,
-           uint8_t max_retries = 100) {
+           uint8_t max_retries = 10) {
   uint8_t num_tries = 0;
   while (!func()) {
     if (num_tries < max_retries) {
@@ -1131,9 +1131,14 @@ void retry(std::function<bool()> func, const __FlashStringHelper *info,
       delay(1000);
       num_tries++;
     } else {
+#ifdef ALLOW_SENSOR_FAILURES
+      log_printf("Too many retries for '%S'. Continuing.\n", info);
+      return;
+#else
       log_printf("Too many retries for '%S'. Restarting.\n", info);
       delay(1000);
       ESP.restart();
+#endif
     }
   }
 }
@@ -1200,10 +1205,12 @@ void loop() {
     ESP.restart();
   }
 
+#ifndef ALLOW_SENSOR_FAILURES
   if (num_measurement_errors > 100) {
     Serial.println(F("Too many measurement errors: restarting."));
     ESP.restart();
   }
+#endif
   if (num_sending_measurement_errors > 100) {
     Serial.println(F("Too many errors sending measurements: restarting."));
     ESP.restart();
