@@ -1007,9 +1007,8 @@ void setup_web_server() {
     request->send(response);
   });
 
-  web_server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request) {
-    request->send(LittleFS, "/style.css", "text/css");
-  });
+  web_server.serveStatic("/style.css", LittleFS, "/style.css")
+      .setCacheControl("max-age=600");
 
   web_server.on("/restart", HTTP_GET, [](AsyncWebServerRequest *request) {
     requested_restart = true;
