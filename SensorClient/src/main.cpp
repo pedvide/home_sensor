@@ -780,8 +780,8 @@ bool setup_station() {
   log_println("setup_station");
 
   // Prepare JSON document
-  const size_t capacity = JSON_OBJECT_SIZE(3);
-  DynamicJsonDocument station_json(capacity + 50);
+  const size_t capacity = JSON_OBJECT_SIZE(3) + 50;
+  StaticJsonDocument<capacity> station_json;
 
   station_json["token"] = mac_sha;
   station_json["location"] = location;
@@ -796,7 +796,7 @@ bool setup_station() {
   int post_httpCode;
 
   http.begin(client, server, port, stations_endpoint);
-  http.addHeader("Content-Type", "application/json");
+  http.addHeader(F("Content-Type"), F("application/json"));
   const char *headerNames[] = {"Location"};
   http.collectHeaders(headerNames,
                       sizeof(headerNames) / sizeof(headerNames[0]));
@@ -965,7 +965,8 @@ void setup_web_server() {
 
   // Web server
   web_server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-    AsyncResponseStream *response = request->beginResponseStream("text/html");
+    AsyncResponseStream *response =
+        request->beginResponseStream(F("text/html"));
     response->printf_P(web_server_html_header, hostname.c_str(),
                        hostname.c_str(), hostname.c_str(), location,
                        hostname.c_str(), hostname.c_str());
@@ -1056,9 +1057,9 @@ bool post_measurement(String &data, String endpoint) {
   }
 
   http.begin(client, server, port, endpoint);
-  http.addHeader("Content-Type", "application/json");
+  http.addHeader(F("Content-Type"), F("application/json"));
 
-  int httpCode = http.POST(data); // Send the request
+  const int httpCode = http.POST(data); // Send the request
   http.end();
   switch (httpCode) {
   case HTTP_CODE_CREATED:
