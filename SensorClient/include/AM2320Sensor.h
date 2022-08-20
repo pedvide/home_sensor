@@ -6,9 +6,11 @@
 #include <ArduinoJson.h>
 #include <Ticker.h>
 
-class AMS2320Sensor : Sensor {
+class AMS2320Sensor : public Sensor {
 public:
-  AMS2320Sensor() {}
+  AMS2320Sensor(const char *name, uint32_t period_s, size_t capacity,
+                size_t response_capacity)
+      : Sensor(name, period_s, capacity, response_capacity) {}
 
   bool setup() {
     log_println("Setting up AM2320 sensor...");
@@ -119,19 +121,15 @@ public:
     return true;
   }
 
-  uint8_t id, temp_id, hum_id;
-  const char *name = "AM2320";
+private:
+  uint8_t temp_id, hum_id;
   AM232X am2320;
-  const uint32_t period_s = 10;
-  const size_t capacity =
-      JSON_ARRAY_SIZE(2) + JSON_OBJECT_SIZE(2) + 2 * JSON_OBJECT_SIZE(3);
-  const size_t response_capacity =
-      JSON_ARRAY_SIZE(2) + JSON_OBJECT_SIZE(3) + 2 * JSON_OBJECT_SIZE(4);
 };
 
-AMS2320Sensor am2320_sensor;
-
-// AM2320 Sensor
-
+AMS2320Sensor am2320_sensor("AM2320", 10,
+                            JSON_ARRAY_SIZE(2) + JSON_OBJECT_SIZE(2) +
+                                2 * JSON_OBJECT_SIZE(3),
+                            JSON_ARRAY_SIZE(2) + JSON_OBJECT_SIZE(3) +
+                                2 * JSON_OBJECT_SIZE(4));
 Ticker am2320_measurement_timer([]() { return am2320_sensor.measure(); },
                                 am2320_sensor.period_s * 1e3, 0, MILLIS);
