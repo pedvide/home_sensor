@@ -27,11 +27,11 @@
 #endif
 
 #ifdef HAS_HDC1080
-#include "ClosedCube_HDC1080.h"
+#include "HDC1080Sensor.h"
 #endif
 
 #ifdef HAS_HP303B
-#include <LOLIN_HP303B.h>
+#include <HP303BSensor.h>
 #endif
 
 //// WiFi
@@ -97,6 +97,38 @@ uint8 num_sending_measurement_errors = 0;
 
 //// Time
 Timezone Amsterdam;
+
+//// Sensors
+Sensor *sensors[NUM_SENSORS] = {
+#ifdef HAS_AM2320
+    &am2320_sensor,
+#endif
+#ifdef HAS_CCS811
+    &ccs811_sensor,
+#endif
+#ifdef HAS_HDC1080
+    &hdc1080_sensor,
+#endif
+#ifdef HAS_HP303B
+    &hp303b_sensor,
+#endif
+};
+
+// Sensor timers
+Ticker *sensor_timers[NUM_SENSORS] = {
+#ifdef HAS_AM2320
+    &am2320_measurement_timer,
+#endif
+#ifdef HAS_CCS811
+    &ccs811_measurement_timer,
+#endif
+#ifdef HAS_HDC1080
+    &hdc1080_measurement_timer,
+#endif
+#ifdef HAS_HP303B
+    &hp303b_measurement_timer,
+#endif
+};
 
 //// Post request
 WiFiClient client;
@@ -265,51 +297,44 @@ bool setup_sensors() {
 
   // Prepare JSON document
   size_t capacity = JSON_ARRAY_SIZE(NUM_SENSORS);
-#ifdef HAS_AM2320
-  capacity += am2320_sensor.capacity;
-#endif
-#ifdef HAS_CCS811
-  capacity += capacity_ccs811;
-#endif
-#ifdef HAS_HDC1080
-  capacity += capacity_hdc1080;
-#endif
-#ifdef HAS_HP303B
-  capacity += capacity_hp303b;
-#endif
+  for (auto sensor : sensors) {
+    capacity += sensor->capacity;
+  }
+  // #ifdef HAS_AM2320
+  //   capacity += am2320_sensor.capacity;
+  // #endif
+  // #ifdef HAS_CCS811
+  //   capacity += ccs811_sensor.capacity;
+  // #endif
+  // #ifdef HAS_HDC1080
+  //   capacity += capacity_hdc1080;
+  // #endif
+  // #ifdef HAS_HP303B
+  //   capacity += capacity_hp303b;
+  // #endif
   DynamicJsonDocument sensors_json(capacity + 200);
 
   size_t response_capacity = JSON_ARRAY_SIZE(NUM_SENSORS);
-#ifdef HAS_AM2320
-  response_capacity += am2320_sensor.response_capacity;
-#endif
-#ifdef HAS_CCS811
-  response_capacity += response_capacity_ccs811;
-#endif
-#ifdef HAS_HDC1080
-  response_capacity += response_capacity_hdc1080;
-#endif
-#ifdef HAS_HP303B
-  response_capacity += response_capacity_hp303b;
-#endif
+  for (auto sensor : sensors) {
+    response_capacity += sensor->response_capacity;
+  }
+  // #ifdef HAS_AM2320
+  //   response_capacity += am2320_sensor.response_capacity;
+  // #endif
+  // #ifdef HAS_CCS811
+  //   response_capacity += response_capacity_ccs811;
+  // #endif
+  // #ifdef HAS_HDC1080
+  //   response_capacity += response_capacity_hdc1080;
+  // #endif
+  // #ifdef HAS_HP303B
+  //   response_capacity += response_capacity_hp303b;
+  // #endif
   DynamicJsonDocument sensors_json_response(response_capacity + 200);
-
-#ifdef HAS_AM2320
-  JsonObject am2320_json = sensors_json.createNestedObject();
-  am2320_sensor.setup_json(am2320_json);
-#endif
-#ifdef HAS_CCS811
-  JsonObject ccs811_json = sensors_json.createNestedObject();
-  setup_ccs811_sensor_json(ccs811_json);
-#endif
-#ifdef HAS_HDC1080
-  JsonObject hdc1080_json = sensors_json.createNestedObject();
-  setup_hdc1080_sensor_json(hdc1080_json);
-#endif
-#ifdef HAS_HP303B
-  JsonObject hp303b_json = sensors_json.createNestedObject();
-  setup_hp303b_sensor_json(hp303b_json);
-#endif
+  for (auto sensor : sensors) {
+    JsonObject sensor_json = sensors_json.createNestedObject();
+    sensor->setup_json(sensor_json);
+  }
 
   // Serialize JSON document
   String sensors_data;
@@ -343,26 +368,12 @@ bool setup_sensors() {
 
   for (JsonObject sensor_json : sensors_json_out) {
     const char *name = sensor_json["name"];
-#ifdef HAS_AM2320
-    if (strcmp(name, am2320_sensor.name) == 0) {
-      am2320_sensor.parse_json(sensor_json);
+    for (auto sensor : sensors) {
+      if (strcmp(name, sensor->name) == 0) {
+        sensor->parse_json(sensor_json);
+        break;
+      }
     }
-#endif
-#ifdef HAS_CCS811
-    if (strcmp(name, sensor_ccs811_name) == 0) {
-      parse_ccs811_sensor_json(sensor_json);
-    }
-#endif
-#ifdef HAS_HDC1080
-    if (strcmp(name, sensor_hdc1080_name) == 0) {
-      parse_hdc1080_sensor_json(sensor_json);
-    }
-#endif
-#ifdef HAS_HP303B
-    if (strcmp(name, sensor_hp303b_name) == 0) {
-      parse_hp303b_sensor_json(sensor_json);
-    }
-#endif
   }
 
   return true;
@@ -370,22 +381,9 @@ bool setup_sensors() {
 
 bool setup_internal_sensors() {
   bool res = true;
-#ifdef HAS_AM2320
-  res = res && am2320_sensor.setup();
-#endif
-
-#ifdef HAS_HDC1080
-  res = res && setup_hdc1080_sensor();
-#endif
-
-#ifdef HAS_CCS811
-  res = res && setup_ccs811_sensor();
-#endif
-
-#ifdef HAS_HP303B
-  res = res && setup_hp303b_sensor();
-#endif
-
+  for (auto sensor : sensors) {
+    res = res && sensor->setup();
+  }
   return res;
 }
 
@@ -607,18 +605,10 @@ void setup() {
   retry(&setup_internal_sensors, F("setup the internal sensors"));
 
   // Timer
-#ifdef HAS_AM2320
-  am2320_measurement_timer.start();
-#endif
-#ifdef HAS_CCS811
-  ccs811_measurement_timer.start();
-#endif
-#ifdef HAS_HDC1080
-  hdc1080_measurement_timer.start();
-#endif
-#ifdef HAS_HP303B
-  hp303b_measurement_timer.start();
-#endif
+  for (auto sensor_timer : sensor_timers) {
+    sensor_timer->start();
+  }
+
   send_timer.start();
 
   digitalWrite(LED_BUILTIN, HIGH); // LED pin is active low
@@ -648,17 +638,8 @@ void loop() {
   }
 
   // Update timer
-#ifdef HAS_AM2320
-  am2320_measurement_timer.update();
-#endif
-#ifdef HAS_CCS811
-  ccs811_measurement_timer.update();
-#endif
-#ifdef HAS_HDC1080
-  hdc1080_measurement_timer.update();
-#endif
-#ifdef HAS_HP303B
-  hp303b_measurement_timer.update();
-#endif
+  for (auto sensor_timer : sensor_timers) {
+    sensor_timer->update();
+  }
   send_timer.update();
 }
