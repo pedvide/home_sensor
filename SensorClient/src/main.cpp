@@ -34,6 +34,10 @@
 #include <HP303BSensor.h>
 #endif
 
+#ifdef HAS_P1
+#include <P1Sensor.h>
+#endif
+
 //// WiFi
 const char *ssid PROGMEM = STASSID;
 const char *password PROGMEM = STAPSK;
@@ -112,6 +116,9 @@ Sensor *sensors[NUM_SENSORS] = {
 #ifdef HAS_HP303B
     &hp303b_sensor,
 #endif
+#ifdef HAS_P1
+    &p1_sensor,
+#endif
 };
 
 // Sensor timers
@@ -127,6 +134,9 @@ Ticker *sensor_timers[NUM_SENSORS] = {
 #endif
 #ifdef HAS_HP303B
     &hp303b_measurement_timer,
+#endif
+#ifdef HAS_P1
+    &p1_measurement_timer,
 #endif
 };
 
