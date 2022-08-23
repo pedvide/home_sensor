@@ -300,37 +300,14 @@ bool setup_sensors() {
   for (auto sensor : sensors) {
     capacity += sensor->capacity;
   }
-  // #ifdef HAS_AM2320
-  //   capacity += am2320_sensor.capacity;
-  // #endif
-  // #ifdef HAS_CCS811
-  //   capacity += ccs811_sensor.capacity;
-  // #endif
-  // #ifdef HAS_HDC1080
-  //   capacity += capacity_hdc1080;
-  // #endif
-  // #ifdef HAS_HP303B
-  //   capacity += capacity_hp303b;
-  // #endif
   DynamicJsonDocument sensors_json(capacity + 200);
 
   size_t response_capacity = JSON_ARRAY_SIZE(NUM_SENSORS);
   for (auto sensor : sensors) {
     response_capacity += sensor->response_capacity;
   }
-  // #ifdef HAS_AM2320
-  //   response_capacity += am2320_sensor.response_capacity;
-  // #endif
-  // #ifdef HAS_CCS811
-  //   response_capacity += response_capacity_ccs811;
-  // #endif
-  // #ifdef HAS_HDC1080
-  //   response_capacity += response_capacity_hdc1080;
-  // #endif
-  // #ifdef HAS_HP303B
-  //   response_capacity += response_capacity_hp303b;
-  // #endif
   DynamicJsonDocument sensors_json_response(response_capacity + 200);
+
   for (auto sensor : sensors) {
     JsonObject sensor_json = sensors_json.createNestedObject();
     sensor->setup_json(sensor_json);
