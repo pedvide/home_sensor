@@ -387,7 +387,7 @@ private:
     SensorData delivery_2_data = {timestamp, id, power_delivery_2_id};
     conversion_ret_val =
         snprintf(delivery_2_data.value, sizeof(delivery_2_data.value), "%.3f",
-                 p1_data.consumption_2 / 1000.0);
+                 p1_data.delivery_2 / 1000.0);
     if (conversion_ret_val > 0) {
       sensor_buffer.push(delivery_2_data);
       if (num_measurement_errors > 0) {
@@ -409,7 +409,7 @@ private:
   }
 };
 
-P1Sensor p1_sensor("P1", 0.3,
+P1Sensor p1_sensor("P1", 0.2,
                    JSON_ARRAY_SIZE(5) + JSON_OBJECT_SIZE(2) +
                        5 * JSON_OBJECT_SIZE(3),
                    JSON_ARRAY_SIZE(5) + JSON_OBJECT_SIZE(3) +
