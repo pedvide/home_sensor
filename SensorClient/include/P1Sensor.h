@@ -41,12 +41,73 @@ public:
     }
   }
 
-  void setup_json(JsonObject &sensor_json) {}
+  void setup_json(JsonObject &sensor_json) {
+    sensor_json["name"] = name;
+    JsonArray sensor_1_in_magnitudes =
+        sensor_json.createNestedArray("magnitudes");
 
-  bool parse_json(JsonObject &sensor_json_response) { return true; }
+    JsonObject mag1_in = sensor_1_in_magnitudes.createNestedObject();
+    mag1_in["name"] = "power_consumption_1";
+    mag1_in["unit"] = "kWh";
+    mag1_in["precision"] = 0.001;
+
+    JsonObject mag2_in = sensor_1_in_magnitudes.createNestedObject();
+    mag2_in["name"] = "power_consumption_2";
+    mag2_in["unit"] = "kWh";
+    mag2_in["precision"] = 0.001;
+
+    JsonObject mag3_in = sensor_1_in_magnitudes.createNestedObject();
+    mag3_in["name"] = "power_delivery_1";
+    mag3_in["unit"] = "kWh";
+    mag3_in["precision"] = 0.001;
+
+    JsonObject mag4_in = sensor_1_in_magnitudes.createNestedObject();
+    mag4_in["name"] = "power_delivery_2";
+    mag4_in["unit"] = "kWh";
+    mag4_in["precision"] = 0.001;
+
+    JsonObject mag5_in = sensor_1_in_magnitudes.createNestedObject();
+    mag5_in["name"] = "gas_consumption";
+    mag5_in["unit"] = "m3";
+    mag5_in["precision"] = 0.001;
+  }
+
+  bool parse_json(JsonObject &sensor_json_response) {
+    id = sensor_json_response["id"];
+    JsonArray magnitudes_json =
+        sensor_json_response["magnitudes"].as<JsonArray>();
+
+    for (JsonObject mag_json : magnitudes_json) {
+      const char *name = mag_json["name"];
+      if (strcmp(name, "power_consumption_1") == 0) {
+        power_consumption_1_id = mag_json["id"];
+      } else if (strcmp(name, "power_consumption_2") == 0) {
+        power_consumption_2_id = mag_json["id"];
+      } else if (strcmp(name, "power_delivery_1") == 0) {
+        power_delivery_1_id = mag_json["id"];
+      } else if (strcmp(name, "power_delivery_2") == 0) {
+        power_delivery_2_id = mag_json["id"];
+      } else if (strcmp(name, "gas_consumption") == 0) {
+        gas_consumption_id = mag_json["id"];
+      }
+    }
+
+    log_printf("  p1_sensor_id: %d, comsuption ids: (%d, %d), delivery ids: "
+               "(%d, %d), gas id: %d.\n",
+               id, power_consumption_1_id, power_consumption_2_id,
+               power_delivery_1_id, power_delivery_2_id, gas_consumption_id);
+    log_header_printf(
+        "  P1 sensor_id: %d, comsuption ids: (%d, %d), delivery ids: "
+        "(%d, %d), gas id: %d.\n",
+        id, power_consumption_1_id, power_consumption_2_id, power_delivery_1_id,
+        power_delivery_2_id, gas_consumption_id);
+
+    return true;
+  }
 
 private:
-  uint8_t temp_id, hum_id;
+  uint8_t power_consumption_1_id, power_consumption_2_id, power_delivery_1_id,
+      power_delivery_2_id, gas_consumption_id;
   const uint32_t baud_rate = 115200;
   // Set during CRC checking
   uint32_t currentCRC = 0;
@@ -135,6 +196,7 @@ private:
     bool result = decode_telegram(telegram);
     if (result) {
       print_data();
+      queue_data();
     }
   }
 
@@ -281,17 +343,76 @@ private:
     log_printf("Actual L1 Power Delivery: %.3f kWh\n",
                p1_data.l1_instant_power_delivery / 1000.0);
 
-    log_printf("Last gas timestap: %s\n",
+    log_printf("Last gas timestamp: %s\n",
                dateTime(getDatetime(p1_data.gas_local_timestamp)).c_str());
     log_printf("Last hourly gas consumption: %.3f m3\n",
                p1_data.gas_consumption);
   }
+
+  void queue_data() {
+    int conversion_ret_val;
+    time_t timestamp = defaultTZ->tzTime(getDatetime(p1_data.local_timestamp));
+
+    SensorData consumption_1_data = {timestamp, id, power_consumption_1_id};
+    conversion_ret_val =
+        snprintf(consumption_1_data.value, sizeof(consumption_1_data.value),
+                 "%.3f", p1_data.consumption_1 / 1000.0);
+    if (conversion_ret_val > 0) {
+      sensor_buffer.push(consumption_1_data);
+      if (num_measurement_errors > 0) {
+        num_measurement_errors--;
+      }
+    }
+    SensorData consumption_2_data = {timestamp, id, power_consumption_2_id};
+    conversion_ret_val =
+        snprintf(consumption_2_data.value, sizeof(consumption_2_data.value),
+                 "%.3f", p1_data.consumption_2 / 1000.0);
+    if (conversion_ret_val > 0) {
+      sensor_buffer.push(consumption_2_data);
+      if (num_measurement_errors > 0) {
+        num_measurement_errors--;
+      }
+    }
+
+    SensorData delivery_1_data = {timestamp, id, power_delivery_1_id};
+    conversion_ret_val =
+        snprintf(delivery_1_data.value, sizeof(delivery_1_data.value), "%.3f",
+                 p1_data.delivery_1 / 1000.0);
+    if (conversion_ret_val > 0) {
+      sensor_buffer.push(delivery_1_data);
+      if (num_measurement_errors > 0) {
+        num_measurement_errors--;
+      }
+    }
+    SensorData delivery_2_data = {timestamp, id, power_delivery_2_id};
+    conversion_ret_val =
+        snprintf(delivery_2_data.value, sizeof(delivery_2_data.value), "%.3f",
+                 p1_data.consumption_2 / 1000.0);
+    if (conversion_ret_val > 0) {
+      sensor_buffer.push(delivery_2_data);
+      if (num_measurement_errors > 0) {
+        num_measurement_errors--;
+      }
+    }
+
+    time_t gas_timestamp =
+        defaultTZ->tzTime(getDatetime(p1_data.gas_local_timestamp));
+    SensorData gas_data = {gas_timestamp, id, gas_consumption_id};
+    conversion_ret_val = snprintf(gas_data.value, sizeof(gas_data.value),
+                                  "%.3f", p1_data.gas_consumption);
+    if (conversion_ret_val > 0) {
+      sensor_buffer.push(gas_data);
+      if (num_measurement_errors > 0) {
+        num_measurement_errors--;
+      }
+    }
+  }
 };
 
 P1Sensor p1_sensor("P1", 0.3,
-                   JSON_ARRAY_SIZE(2) + JSON_OBJECT_SIZE(2) +
-                       2 * JSON_OBJECT_SIZE(3),
-                   JSON_ARRAY_SIZE(2) + JSON_OBJECT_SIZE(3) +
-                       2 * JSON_OBJECT_SIZE(4));
+                   JSON_ARRAY_SIZE(5) + JSON_OBJECT_SIZE(2) +
+                       5 * JSON_OBJECT_SIZE(3),
+                   JSON_ARRAY_SIZE(5) + JSON_OBJECT_SIZE(3) +
+                       5 * JSON_OBJECT_SIZE(4));
 Ticker p1_measurement_timer([]() { return p1_sensor.measure(); },
                             p1_sensor.period_s * 1e3, 0, MILLIS);
