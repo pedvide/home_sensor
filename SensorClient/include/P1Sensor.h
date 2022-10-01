@@ -40,8 +40,9 @@ public:
       yield();
     }
 
-    if (abs(now() - getDatetime(p1_data.local_timestamp)) >
-        max_time_no_measurent_s) {
+    if (first_measurement &&
+        (abs(defaultTZ->now() - getDatetime(p1_data.local_timestamp))) >
+            max_time_no_measurent_s) {
       log_println(F("Too long without a valid measurement!"));
       ESP.restart();
     }
@@ -118,7 +119,8 @@ private:
   // Set during CRC checking
   uint32_t currentCRC = 0;
 
-  uint32_t max_time_no_measurent_s = 120;
+  const uint32_t max_time_no_measurent_s = 120;
+  bool first_measurement = false;
 
   String telegram;
 
@@ -205,6 +207,11 @@ private:
     if (result) {
       print_data();
       queue_data();
+
+      // record first measurement
+      if (!first_measurement) {
+        first_measurement = true;
+      }
     }
   }
 
