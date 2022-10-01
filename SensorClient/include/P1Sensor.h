@@ -98,12 +98,12 @@ public:
       }
     }
 
-    log_printf("  p1_sensor_id: %d, comsuption ids: (%d, %d), delivery ids: "
+    log_printf("  p1_sensor_id: %d, consumption ids: (%d, %d), delivery ids: "
                "(%d, %d), gas id: %d.\n",
                id, power_consumption_1_id, power_consumption_2_id,
                power_delivery_1_id, power_delivery_2_id, gas_consumption_id);
     log_header_printf(
-        "  P1 sensor_id: %d, comsuption ids: (%d, %d), delivery ids: "
+        "  P1 sensor_id: %d, consumption ids: (%d, %d), delivery ids: "
         "(%d, %d), gas id: %d.\n",
         id, power_consumption_1_id, power_consumption_2_id, power_delivery_1_id,
         power_delivery_2_id, gas_consumption_id);
