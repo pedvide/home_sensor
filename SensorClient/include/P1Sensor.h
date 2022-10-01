@@ -39,6 +39,12 @@ public:
       process_line(telegram);
       yield();
     }
+
+    if (abs(now() - getDatetime(p1_data.local_timestamp)) >
+        max_time_no_measurent_s) {
+      log_println(F("Too long without a valid measurement!"));
+      ESP.restart();
+    }
   }
 
   void setup_json(JsonObject &sensor_json) {
@@ -111,6 +117,8 @@ private:
   const uint32_t baud_rate = 115200;
   // Set during CRC checking
   uint32_t currentCRC = 0;
+
+  uint32_t max_time_no_measurent_s = 120;
 
   String telegram;
 
