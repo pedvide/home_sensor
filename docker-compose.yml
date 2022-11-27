@@ -11,6 +11,7 @@ services:
       context: ./rest_server/
       dockerfile: docker/Dockerfile
     image:  home-sensor/server
+    user: "${HOMESENSOR_UID}:${HOMESENSOR_GID}"
     environment:
       - MAX_WORKERS=4
     env_file:
