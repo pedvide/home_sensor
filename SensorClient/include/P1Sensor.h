@@ -39,7 +39,9 @@ public:
       process_line(telegram);
       yield();
     }
+  }
 
+  void watchdog() {
     if (first_measurement &&
         (abs(defaultTZ->now() - getDatetime(p1_data.local_timestamp))) >
             max_time_no_measurent_s) {

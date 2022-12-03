@@ -24,6 +24,7 @@ public:
 
   virtual bool setup() = 0;
   virtual void measure() = 0;
+  void watchdog(){};
   virtual void setup_json(JsonObject &sensor_json) = 0;
   virtual bool parse_json(JsonObject &sensor_json_response) = 0;
 
