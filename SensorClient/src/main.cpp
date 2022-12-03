@@ -140,6 +140,11 @@ Ticker *sensor_timers[NUM_SENSORS] = {
 #endif
 };
 
+// Watchdog timer
+const uint32_t watchdog_period_s = 60;
+void watchdog();
+Ticker watchdog_timer(watchdog, int(watchdog_period_s) * 1e3, 0, MILLIS);
+
 //// Post request
 WiFiClient client;
 HTTPClient http;
@@ -533,6 +538,12 @@ void send_data() {
 }
 #endif
 
+void watchdog() {
+  for (auto sensor : sensors) {
+    sensor->watchdog();
+  }
+}
+
 void retry(std::function<bool()> func, const __FlashStringHelper *info,
            uint8_t max_retries = 10) {
   uint8_t num_tries = 0;
@@ -595,8 +606,8 @@ void setup() {
   for (auto sensor_timer : sensor_timers) {
     sensor_timer->start();
   }
-
   send_timer.start();
+  watchdog_timer.start();
 
   digitalWrite(LED_BUILTIN, HIGH); // LED pin is active low
 }
@@ -629,4 +640,5 @@ void loop() {
     sensor_timer->update();
   }
   send_timer.update();
+  watchdog_timer.update();
 }
