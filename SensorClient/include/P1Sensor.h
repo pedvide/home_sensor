@@ -42,9 +42,8 @@ public:
   }
 
   void watchdog() {
-    if (first_measurement &&
-        (abs(defaultTZ->now() - getDatetime(p1_data.local_timestamp))) >
-            max_time_no_measurent_s) {
+    if ((last_measurement > 0) &&
+        (abs(defaultTZ->now() - last_measurement)) > max_time_no_measurent_s) {
       log_println(F("Too long without a valid measurement!"));
       ESP.restart();
     }
@@ -122,7 +121,7 @@ private:
   uint32_t currentCRC = 0;
 
   const uint32_t max_time_no_measurent_s = 120;
-  bool first_measurement = false;
+  time_t last_measurement = 0;
 
   String telegram;
 
@@ -209,11 +208,7 @@ private:
     if (result) {
       print_data();
       queue_data();
-
-      // record first measurement
-      if (!first_measurement) {
-        first_measurement = true;
-      }
+      last_measurement = defaultTZ->now();
     }
   }
 
