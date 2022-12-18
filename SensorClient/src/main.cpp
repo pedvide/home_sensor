@@ -497,12 +497,11 @@ bool post_measurement(String &data, String endpoint) {
 void send_data() {}
 #else
 void send_data() {
-
-  log_heap_usage();
-
   if (sensor_buffer.isEmpty()) {
     return;
   }
+  log_heap_usage();
+
   using index_t = decltype(sensor_buffer)::index_t;
 
   const index_t num_measurements = sensor_buffer.size();
