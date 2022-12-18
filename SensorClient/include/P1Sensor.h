@@ -44,8 +44,13 @@ public:
   void watchdog() {
     if ((last_measurement > 0) &&
         (abs(defaultTZ->now() - last_measurement)) > max_time_no_measurent_s) {
-      log_println(F("Too long without a valid measurement!"));
+      log_println(
+          F("P1 watchdog failed: Too long without a valid measurement!"));
+      delay(1000);
       ESP.restart();
+    } else {
+      log_printf("P1 watchdog ok, last measurement: %ds ago.\n",
+                 defaultTZ->now() - last_measurement);
     }
   }
 
@@ -206,7 +211,7 @@ private:
   void process_line(String telegram) {
     bool result = decode_telegram(telegram);
     if (result) {
-      print_data();
+      // print_data();
       queue_data();
       last_measurement = defaultTZ->now();
     }
